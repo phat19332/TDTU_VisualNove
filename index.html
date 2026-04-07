@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Time, Dreams, Trials & Us</title>
+  <link rel="stylesheet" href="/style.css">
+  <!-- Google Fonts: Inter cho Text thông thường và Noto Serif cho Dialogue -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="game-container">
+    
+    <!-- Màn Hình Splash (Loading Poster) -->
+    <div id="splash-screen" class="screen active">
+      <div class="splash-poster"></div>
+      <div class="loading-text">Loading...</div>
+    </div>
+
+    <!-- Màn Hình Tiêu Đề -->
+    <div id="title-screen" class="screen">
+      <div class="title-bg"></div>
+      <div class="title-content">
+        <h1 class="game-logo">Time, Dreams, Trials & Us</h1>
+        <p class="subtitle">Đại Học Tôn Đức Thắng - Nơi Ước Mơ Bắt Đầu</p>
+        <div class="menu-buttons">
+          <button id="btn-start" class="menu-btn">Bắt Đầu Mới</button>
+          <button id="btn-load" class="menu-btn">Tiếp Tục</button>
+          <button id="btn-settings" class="menu-btn">Cài Đặt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Màn Hình Game Chơi -->
+    <div id="game-screen" class="screen">
+      <!-- Lớp Nền -->
+      <div id="layer-bg" class="layer"></div>
+      
+      <!-- Lớp Nhân vật -->
+      <div id="layer-character" class="layer">
+        <img id="char-sprite" src="" alt="Character" style="opacity: 0;">
+      </div>
+
+      <!-- Quick Menu trên Box Thoại -->
+      <div class="quick-menu">
+        <button id="qm-save" class="qm-btn" title="Save">Save</button>
+        <button id="qm-load" class="qm-btn" title="Load">Load</button>
+        <button id="qm-skip" class="qm-btn" title="Skip">Skip</button>
+        <button id="qm-auto" class="qm-btn" title="Auto">Auto</button>
+        <button id="qm-log" class="qm-btn" title="Log">Log</button>
+        <button id="qm-settings" class="qm-btn" title="Settings">Cài Đặt</button>
+      </div>
+
+      <!-- Hộp Thoại (Dialogue Box) -->
+      <div id="dialogue-box" class="dialogue-box">
+        <div id="name-tag" class="name-tag"></div>
+        <div class="text-area">
+          <p id="dialogue-text" class="text"></p>
+          <div id="text-caret" class="caret">▼</div>
+        </div>
+      </div>
+      
+      <!-- Overlay Lựa chọn (Choices) -->
+      <div id="choices-overlay" class="choices-overlay hidden">
+        <!-- Buttons sẽ được JavaScript tạo động ở đây -->
+      </div>
+    </div>
+
+    <!-- Overlay: Menu Lưu / Tải (Save/Load) -->
+    <div id="saveload-overlay" class="modal-overlay hidden">
+      <div class="modal-content">
+        <h2 id="sl-title" class="modal-title">Save Game</h2>
+        <div class="slots-container" id="slots-container">
+          <!-- 6 slots sẽ được render qua JS -->
+        </div>
+        <button id="btn-close-saveload" class="modal-close-btn">Đóng</button>
+      </div>
+    </div>
+
+    <!-- Overlay: Log Hội Thoại -->
+    <div id="log-overlay" class="modal-overlay hidden">
+      <div class="modal-content log-content">
+        <h2 class="modal-title">Lịch Sử Trò Chuyện</h2>
+        <div id="log-scroll-area" class="log-scroll-area">
+          <!-- Các đoạn log sẽ xuất hiện ở đây -->
+        </div>
+        <button id="btn-close-log" class="modal-close-btn">Đóng</button>
+      </div>
+    </div>
+
+    <!-- Overlay: Settings -->
+    <div id="settings-overlay" class="modal-overlay hidden">
+      <div class="modal-content">
+        <h2 class="modal-title">Cài Đặt</h2>
+        <div class="settings-group">
+          <label for="bgm-volume">Âm Lượng Nhạc Nền (BGM): <span id="bgm-val">100</span>%</label>
+          <input type="range" id="bgm-volume" min="0" max="100" value="100">
+        </div>
+        <div class="settings-group">
+          <label for="sfx-volume">Âm Lượng Hiệu Ứng (SFX): <span id="sfx-val">100</span>%</label>
+          <input type="range" id="sfx-volume" min="0" max="100" value="100">
+        </div>
+        <div class="settings-group">
+          <label for="text-speed">Tốc Độ Chữ: <span id="speed-val">Bình thường</span></label>
+          <input type="range" id="text-speed" min="10" max="100" value="25" step="5" dir="rtl"> <!-- text speed ms per char, lower is faster -->
+        </div>
+        <button id="btn-close-settings" class="modal-close-btn">Xong</button>
+      </div>
+    </div>
+
+  </div>
+  
+  <script type="module" src="/main.js"></script>
+</body>
+</html>
