@@ -11,6 +11,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const studioScreen = document.getElementById('studio-screen');
   const splashScreen = document.getElementById('splash-screen');
   const titleScreen = document.getElementById('title-screen');
+
+  // --- Âm thanh Logo Studio ---
+  const playStudioSound = () => {
+    const introSound = new Audio(getAssetUrl('studio_intro.mp3'));
+    introSound.volume = 0.6; // Âm lượng vừa phải
+    introSound.play().catch(e => console.warn("Âm thanh intro bị trình duyệt chặn (cần tương tác trước)"));
+  };
+
+  // Phát nhạc ngay khi load (nếu trình duyệt cho phép)
+  playStudioSound();
   
   // Áp dụng Logo Studio
   const fegLogoImg = document.getElementById('feg-logo-img');
