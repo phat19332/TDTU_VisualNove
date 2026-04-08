@@ -139,6 +139,46 @@ body {
   letter-spacing: -1px;
 }
 
+/* --- MÀN HÌNH STUDIO (FEG LOGO) --- */
+#studio-screen {
+  background-color: #ffffff; /* Nền trắng hợp với logo FEG */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.studio-logo {
+  max-width: 350px;
+  width: 80%; /* Responsive */
+  opacity: 0;
+  transform: scale(0.8) translateY(20px);
+  animation: studioFadeInScale 3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes studioFadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1.05) translateY(0);
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9) translateY(-10px);
+  }
+}
+
 .subtitle {
   font-size: 1.2rem;
   color: var(--tdt-red);

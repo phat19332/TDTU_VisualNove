@@ -7,11 +7,19 @@ let currentPlayerId = null;
 let useOnlineSave = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // --- Splash Screen ---
+  // --- Screens ---
+  const studioScreen = document.getElementById('studio-screen');
   const splashScreen = document.getElementById('splash-screen');
   const titleScreen = document.getElementById('title-screen');
   
+  // Áp dụng Logo Studio
+  const fegLogoImg = document.getElementById('feg-logo-img');
+  if (fegLogoImg) {
+      fegLogoImg.src = getAssetUrl('feg_logo.png'); // Sẽ tự động lấy từ Supabase Storage nếu bạn up file mang tên feg_logo.png lên đó
+  }
+
   // Áp dụng Poster từ Supabase
+
   const posterDiv = document.querySelector('.splash-poster');
   if (posterDiv) {
       posterDiv.style.backgroundImage = `url('${getAssetUrl('poster.png')}')`;
@@ -37,16 +45,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // --- Kết thúc Loading, chuyển sang Title ---
+  // --- Sequence: Studio Intro -> Loading Splash -> Title ---
   setTimeout(() => {
-    splashScreen.classList.remove('active');
-    titleScreen.classList.add('active');
+    // 1. Kết thúc giới thiệu Studio (sau 3.5s)
+    if (studioScreen) studioScreen.classList.remove('active');
+    if (splashScreen) splashScreen.classList.add('active');
     
-    // Phát nhạc nền ngay tại màn hình Title (lấy bài đầu tiên trong kịch bản)
-    if (gameScript && gameScript[0] && gameScript[0].bgm) {
-        game.playBGM(gameScript[0].bgm);
-    }
-  }, 5000);
+    // 2. Chuyển từ Loading sang Title (sau 5s nữa)
+    setTimeout(() => {
+      splashScreen.classList.remove('active');
+      titleScreen.classList.add('active');
+      
+      // Phát nhạc nền ngay tại màn hình Title (lấy bài đầu tiên trong kịch bản)
+      if (gameScript && gameScript[0] && gameScript[0].bgm) {
+          game.playBGM(gameScript[0].bgm);
+      }
+    }, 5000);
+    
+  }, 3500);
 
   // --- Khởi tạo UI Elements ---
   const ui = {
