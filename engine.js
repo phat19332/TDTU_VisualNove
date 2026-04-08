@@ -1,3 +1,5 @@
+import { getAssetUrl } from './supabase.js';
+
 export class VNEngine {
   constructor(script, uiElements) {
     this.script = script; // Dữ liệu cốt truyện
@@ -24,7 +26,7 @@ export class VNEngine {
     // Audio
     this.bgmAudio = new Audio();
     this.bgmAudio.loop = true;
-    this.sfxClick = new Audio('/assets/audio/click.mp3');
+    this.sfxClick = new Audio(getAssetUrl('click.mp3'));
     
     // Bind main click event
     this.ui.dialogueBox.addEventListener('click', () => {
@@ -110,7 +112,7 @@ export class VNEngine {
 
     // Đổi background
     if (line.bg) {
-      this.ui.layerBg.style.backgroundImage = `url('${line.bg}')`;
+      this.ui.layerBg.style.backgroundImage = `url('${getAssetUrl(line.bg)}')`;
     }
 
     // Đổi/Phát nhạc nền (BGM)
@@ -119,25 +121,43 @@ export class VNEngine {
         this.bgmAudio.pause();
         this.bgmAudio.currentTime = 0;
       } else {
-        const currentSrc = new URL(this.bgmAudio.src || "dummy:", window.location.href).pathname;
-        if (currentSrc !== line.bgm && line.bgm !== undefined) {
-          this.bgmAudio.src = line.bgm;
+        // Chuẩn hóa đường dẫn để so sánh (tránh phát lại nhạc đang chạy)
+        const absoluteBvUrl = new URL(line.bgm, window.location.href).href;
+        const currentBvUrl = this.bgmAudio.src;
+
+        if (currentBvUrl !== absoluteBvUrl) {
+          this.bgmAudio.src = absoluteBvUrl;
           this.bgmAudio.volume = this.bgmVolume;
-          this.bgmAudio.play().catch(e => console.warn("Auto-play blocked"));
+          
+          // Chơi nhạc và bắt lỗi auto-play
+          const playPromise = this.bgmAudio.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(error => {
+              console.warn("Auto-play bị trình duyệt chặn, chờ click tiếp theo: ", error);
+            });
+          }
+        } else if (this.bgmAudio.paused) {
+          // Nếu nhạc đang dừng (do bị chặn trước đó) thì thử phát lại
+          this.bgmAudio.play().catch(() => {});
         }
       }
     }
 
     // Đổi nhân vật và Emotion
     if (line.char !== undefined) {
-      if (line.char === null) {
+      if (line.char === null || line.char === 'null') {
         this.ui.charSprite.style.opacity = '0';
       } else {
-        // Logic emotion: Nếu có line.emotion => build char_{emotion}.png
         let spritePath = line.char;
-        if (!spritePath.includes('/')) {
-            // Tên ngắn gọn
-            spritePath = `/assets/characters/${line.char}${line.emotion ? '_' + line.emotion : ''}.png`;
+        
+        // Nếu là tên ngắn (VD: hao_nhien) -> Build path online
+        if (!spritePath.startsWith('http') && !spritePath.includes('/')) {
+            const ext = spritePath.includes('.') ? '' : '.png';
+            const emotionSuffix = line.emotion ? '_' + line.emotion : '';
+            spritePath = getAssetUrl(`${spritePath}${emotionSuffix}${ext}`);
+        } else {
+            // Nếu là path cũ (/assets/...) -> Convert sang URL online
+            spritePath = getAssetUrl(spritePath);
         }
         
         this.ui.charSprite.src = spritePath;
@@ -244,6 +264,30 @@ export class VNEngine {
           if (this.isTyping) this.completeTyping();
           else this.next(true);
       }
+  }
+
+  playBGM(url) {
+    if (!url) return;
+    const absoluteBvUrl = getAssetUrl(url);
+    if (this.bgmAudio.src !== absoluteBvUrl) {
+      this.bgmAudio.src = absoluteBvUrl;
+      this.bgmAudio.volume = this.bgmVolume;
+    }
+    
+    const playPromise = this.bgmAudio.play();
+    if (playPromise !== undefined) {
+        playPromise.catch(e => {
+            console.warn("Nhạc nền đang chờ tương tác người dùng để phát...");
+            // Lắng nghe click đầu tiên để phát nhạc nếu bị chặn
+            const playOnInteraction = () => {
+                this.bgmAudio.play().catch(() => {});
+                document.removeEventListener('click', playOnInteraction);
+                document.removeEventListener('keydown', playOnInteraction);
+            };
+            document.addEventListener('click', playOnInteraction);
+            document.addEventListener('keydown', playOnInteraction);
+        });
+    }
   }
 
   setVolume(type, val) {

@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="/style.css">
   <!-- Google Fonts: Inter cho Text thông thường và Noto Serif cho Dialogue -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="game-container">
@@ -85,6 +87,17 @@
           <!-- Các đoạn log sẽ xuất hiện ở đây -->
         </div>
         <button id="btn-close-log" class="modal-close-btn">Đóng</button>
+      </div>
+    </div>
+
+    <!-- Overlay: Nhập Player ID -->
+    <div id="player-id-overlay" class="modal-overlay hidden">
+      <div class="modal-content player-id-content">
+        <h2 class="modal-title">Nhập Tên / ID Người Chơi</h2>
+        <p style="text-align:center;color:#666;font-size:0.95rem;">Dùng để lưu tiến trình game trên máy chủ.<br>Bạn có thể nhập bất kỳ tên gì!</p>
+        <input type="text" id="player-id-input" class="player-id-input" placeholder="VD: HaoNhien2026" maxlength="30">
+        <button id="btn-confirm-player" class="modal-close-btn" style="background:var(--tdt-blue);">Xác Nhận & Chơi</button>
+        <button id="btn-skip-player" class="modal-close-btn" style="background:#999;margin-top:5px;font-size:0.9rem;padding:8px 30px;">Chơi Ẩn Danh (Không Lưu Online)</button>
       </div>
     </div>
 

@@ -5,3 +5,4 @@ dist
 .env
 setup.js
 copy_poster.js
+supabase_setup.sql

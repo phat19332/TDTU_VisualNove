@@ -399,3 +399,13 @@ body {
 }
 .modal-close-btn:hover { background: #b31229; }
 
+/* Player ID */
+.player-id-content { max-width: 450px; text-align: center; }
+.player-id-input {
+  width: 80%; padding: 12px 20px; border: 2px solid var(--tdt-blue);
+  border-radius: 10px; font-size: 1.2rem; font-family: var(--font-ui);
+  text-align: center; outline: none; transition: 0.2s;
+}
+.player-id-input:focus { border-color: var(--tdt-red); box-shadow: 0 0 10px rgba(227,24,55,0.2); }
+
+

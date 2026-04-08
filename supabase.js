@@ -1,0 +1,180 @@
+// ============================================
+// Supabase Client & API Helpers
+// Time, Dreams, Trials & Us - Visual Novel
+// ============================================
+
+const SUPABASE_URL = 'https://wqslipfvtrkjnnlpxsic.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxc2xpcGZ2dHJram5ubHB4c2ljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2MzY1MTUsImV4cCI6MjA5MTIxMjUxNX0.DtJlEA-lmpB4v5X6MQslgbky-d2S3xwyFHQixcin4zQ';
+const STORAGE_BASE_URL = `${SUPABASE_URL}/storage/v1/object/public/game-assets`;
+
+let supabaseClient = null;
+
+/**
+ * Hàm hỗ trợ lấy URL tài nguyên. 
+ * Nếu path bắt đầu bằng /assets/ hoặc là tên file đơn giản, nó sẽ chuyển sang link Supabase.
+ */
+export function getAssetUrl(path) {
+  if (!path || typeof path !== 'string') return path;
+  if (path.startsWith('http')) return path; // Đã là URL ngoài
+  
+  // Tách tên file từ đường dẫn cũ (VD: /assets/backgrounds/abc.png -> abc.png)
+  const filename = path.split('/').pop();
+  
+  // Nếu là đường dẫn cục bộ cũ hoặc chỉ là tên file, trỏ về Supabase Storage
+  if (path.startsWith('/assets/') || !path.includes('/')) {
+    return `${STORAGE_BASE_URL}/${filename}`;
+  }
+  
+  return path;
+}
+
+/**
+ * Khởi tạo Supabase Client (gọi sau khi CDN đã load)
+ */
+export function initSupabase() {
+  if (window.supabase) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('✅ Supabase client initialized');
+    return true;
+  }
+  console.warn('⚠️ Supabase CDN chưa load, sẽ dùng dữ liệu local');
+  return false;
+}
+
+/**
+ * Đọc kịch bản game từ bảng `scripts` trên Supabase
+ * Chuyển đổi từ format bảng sang format storyScript mà VNEngine hiểu
+ */
+export async function fetchScript() {
+  if (!supabaseClient) return null;
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('scripts')
+      .select('*')
+      .order('order_index', { ascending: true });
+
+    if (error) throw error;
+    if (!data || data.length === 0) return null;
+
+    // Chuyển đổi format bảng Supabase → format storyScript
+    const script = data.map(row => {
+      const line = {};
+
+      if (row.scene_id)      line.id = row.scene_id;
+      if (row.bg)            line.bg = row.bg;
+      if (row.bgm)           line.bgm = row.bgm;
+      
+      // Xử lý nhân vật
+      if (row.char_name !== null && row.char_name !== undefined) {
+        if (row.char_name === '' || row.char_name === 'null') {
+          line.char = null;
+        } else {
+          line.char = row.char_name;
+        }
+      }
+      
+      if (row.emotion)       line.emotion = row.emotion;
+      if (row.char_anim)     line.charAnim = row.char_anim;
+      if (row.speaker)       line.speaker = row.speaker;
+      if (row.speaker_color) line.speakerColor = row.speaker_color;
+      
+      line.text = row.dialogue || '';
+
+      // Parse choices: Format "Text1|id1;;Text2|id2"
+      if (row.choices && row.choices.trim() !== '') {
+        line.choices = row.choices.split(';;').map(c => {
+          const [text, next] = c.split('|');
+          return { text: text.trim(), next: next.trim() };
+        });
+      }
+
+      if (row.next_id) line.next = row.next_id;
+
+      return line;
+    });
+
+    console.log(`✅ Loaded ${script.length} lines from Supabase`);
+    return script;
+
+  } catch (err) {
+    console.error('❌ Lỗi fetch script từ Supabase:', err);
+    return null;
+  }
+}
+
+/**
+ * Lưu game (Save) lên Supabase
+ */
+export async function saveGame(playerId, slot, scriptIndex) {
+  if (!supabaseClient) {
+    console.warn('Supabase chưa kết nối, lưu vào LocalStorage');
+    return false;
+  }
+
+  try {
+    const { error } = await supabaseClient
+      .from('saves')
+      .upsert({
+        player_id: playerId,
+        slot: slot,
+        script_index: scriptIndex,
+        saved_at: new Date().toISOString()
+      }, {
+        onConflict: 'player_id,slot'
+      });
+
+    if (error) throw error;
+    console.log(`✅ Saved game: Player ${playerId}, Slot ${slot}, Index ${scriptIndex}`);
+    return true;
+
+  } catch (err) {
+    console.error('❌ Lỗi save game:', err);
+    return false;
+  }
+}
+
+/**
+ * Tải game (Load) từ Supabase
+ */
+export async function loadGame(playerId, slot) {
+  if (!supabaseClient) return null;
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('saves')
+      .select('*')
+      .eq('player_id', playerId)
+      .eq('slot', slot)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
+    return data || null;
+
+  } catch (err) {
+    console.error('❌ Lỗi load game:', err);
+    return null;
+  }
+}
+
+/**
+ * Lấy tất cả slots đã lưu của một người chơi
+ */
+export async function getAllSaves(playerId) {
+  if (!supabaseClient) return [];
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('saves')
+      .select('*')
+      .eq('player_id', playerId)
+      .order('slot', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+
+  } catch (err) {
+    console.error('❌ Lỗi lấy danh sách saves:', err);
+    return [];
+  }
+}
