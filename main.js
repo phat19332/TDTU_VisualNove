@@ -15,11 +15,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   // --- Âm thanh Logo Studio ---
   const playStudioSound = () => {
     const introSound = new Audio(getAssetUrl('studio_intro.mp3'));
-    introSound.volume = 0.6; // Âm lượng vừa phải
-    introSound.play().catch(e => console.warn("Âm thanh intro bị trình duyệt chặn (cần tương tác trước)"));
+    introSound.volume = 0.6;
+    
+    const attemptPlay = () => {
+      introSound.play()
+        .then(() => {
+          // Nếu phát thành công, gỡ bỏ tất cả các listener "mồi"
+          document.removeEventListener('click', attemptPlay);
+          document.removeEventListener('keydown', attemptPlay);
+        })
+        .catch(e => console.log("Chờ tương tác để phát nhạc logo..."));
+    };
+
+    // Mồi sẵn: Click hoặc bấm phím bất kỳ đều sẽ kích hoạt nhạc logo
+    document.addEventListener('click', attemptPlay);
+    document.addEventListener('keydown', attemptPlay);
+    
+    // Thử phát ngay (nếu trình duyệt đã cho phép từ trước)
+    attemptPlay();
   };
 
-  // Phát nhạc ngay khi load (nếu trình duyệt cho phép)
   playStudioSound();
   
   // Áp dụng Logo Studio
