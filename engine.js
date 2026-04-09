@@ -178,7 +178,22 @@ export class VNEngine {
     this.ui.choicesOverlay.classList.add('hidden');
     this.ui.choicesOverlay.innerHTML = '';
     
-    this.typeText(line.text, line.choices);
+    // Xử lý lựa chọn: Chấp nhận cả JSON string, Array, hoặc Shorthand string (| và ;;)
+    let processedChoices = line.choices;
+    if (typeof processedChoices === 'string' && processedChoices.trim() !== '') {
+      try {
+        // Thử parse nếu là JSON
+        processedChoices = JSON.parse(processedChoices);
+      } catch (e) {
+        // Nếu không phải JSON, hãy parse theo kiểu Shorthand (| và ;;)
+        processedChoices = processedChoices.split(';;').map(choiceStr => {
+          const [text, next] = choiceStr.split('|');
+          return { text: text.trim(), next: (next || '').trim() };
+        });
+      }
+    }
+    
+    this.typeText(line.text, processedChoices);
   }
 
   typeText(text, choices) {
@@ -207,11 +222,11 @@ export class VNEngine {
     const line = this.script[this.currentIndex];
     this.ui.dialogueText.innerHTML = text || line.text;
     
-    if (line.choices || choices) {
+    if (choices && choices.length > 0) {
       this.isAutoMode = false;
       this.isSkipMode = false;
       this.syncModeUI();
-      this.showChoices(line.choices || choices);
+      this.showChoices(choices);
     } else {
       this.ui.textCaret.style.display = 'block';
       
@@ -219,12 +234,13 @@ export class VNEngine {
       if (this.isSkipMode) {
           this.autoTimer = setTimeout(() => this.next(true), 50);
       } else if (this.isAutoMode) {
-          this.autoTimer = setTimeout(() => this.next(true), 2000); // Đợi 2 giây sang câu mới
+          this.autoTimer = setTimeout(() => this.next(true), 2000); 
       }
     }
   }
 
   showChoices(choices) {
+    if (!choices || choices.length === 0) return;
     this.ui.choicesOverlay.classList.remove('hidden');
     choices.forEach(c => {
       const btn = document.createElement('button');
