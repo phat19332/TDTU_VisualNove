@@ -222,11 +222,27 @@ export class VNEngine {
     const line = this.script[this.currentIndex];
     this.ui.dialogueText.innerHTML = text || line.text;
     
-    if (choices && choices.length > 0) {
+    // Parse choices if missing (thường xảy ra khi người dùng click tua nhanh câu thoại)
+    let finalChoices = choices;
+    if (!finalChoices && line.choices) {
+        finalChoices = line.choices;
+        if (typeof finalChoices === 'string' && finalChoices.trim() !== '') {
+            try {
+                finalChoices = JSON.parse(finalChoices);
+            } catch (e) {
+                finalChoices = finalChoices.split(';;').map(choiceStr => {
+                    const [cText, cNext] = choiceStr.split('|');
+                    return { text: cText.trim(), next: (cNext || '').trim() };
+                });
+            }
+        }
+    }
+    
+    if (finalChoices && finalChoices.length > 0) {
       this.isAutoMode = false;
       this.isSkipMode = false;
       this.syncModeUI();
-      this.showChoices(choices);
+      this.showChoices(finalChoices);
     } else {
       this.ui.textCaret.style.display = 'block';
       
