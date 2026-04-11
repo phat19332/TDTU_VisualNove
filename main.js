@@ -437,7 +437,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
         <div class="track-playing-anim"><span></span><span></span><span></span></div>
       `;
-      // Click vào thư viện → không phát nhạc, chỉ thông tin tham khảo
+      
+      // Click vào bài hát trong thư viện để phát thủ công
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        
+        // Lấy URL bài hát
+        let trackUrl = track.url;
+        if (trackUrl && !trackUrl.startsWith('http')) {
+          trackUrl = getAssetUrl(trackUrl);
+        }
+
+        // Yêu cầu Engine phát bài này
+        game.bgmAudio.src = trackUrl;
+        game.bgmAudio.play().catch(err => console.warn("Lỗi phát nhạc thủ công:", err));
+        
+        // Cập nhật UI
+        updateNowPlaying(trackUrl);
+      });
+      
       musicTracklistEl.appendChild(item);
     });
   }
