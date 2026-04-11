@@ -83,7 +83,7 @@
       </div>
 
       <!-- Gallery Icon (nhỏ gọn ở góc phải) -->
-      <button id="btn-gallery-game" class="gallery-icon-btn" title="Thư Viện Ảnh">🖼️</button>
+      <button id="btn-gallery-global" class="gallery-icon-btn" title="Thư Viện Ảnh (Gallery) & Thành Tựu">🖼️</button>
     </div>
 
     <!-- Music Player Toggle Button -->
@@ -217,6 +217,12 @@
         </div>
         <button id="btn-close-gallery" class="modal-close-btn">Quay Lại</button>
       </div>
+    </div>
+
+    <!-- Fullscreen ImageViewer -->
+    <div id="fullscreen-view" class="modal-overlay hidden" style="z-index: 9999; background: rgba(0,0,0,0.95); cursor: zoom-out;">
+      <img id="fullscreen-img" src="" style="max-width: 95%; max-height: 95%; object-fit: contain; pointer-events: none; -webkit-user-drag: none;">
+      <button id="btn-close-fullscreen" title="Đóng" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); color: white; width: 44px; height: 44px; border-radius: 50%; border: none; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px);">✕</button>
     </div>
 
   </div><!-- end #game-container -->

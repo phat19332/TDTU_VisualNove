@@ -65,7 +65,7 @@ export async function fetchScript() {
       if (row.bg)            line.bg = row.bg;
       if (row.bgm)           line.bgm = row.bgm;
       
-      // Xử lý nhân vật
+      // Xử lý nhân vật (Single char - backward compat)
       if (row.char_name !== null && row.char_name !== undefined) {
         if (row.char_name === '' || row.char_name === 'null') {
           line.char = null;
@@ -73,6 +73,16 @@ export async function fetchScript() {
           line.char = row.char_name;
         }
       }
+
+      // Dual Character System (char_l ưu tiên hơn char_name)
+      if (row.char_l !== null && row.char_l !== undefined) {
+        line.char_l = (row.char_l === '' || row.char_l === 'null') ? null : row.char_l;
+      }
+      if (row.char_r !== null && row.char_r !== undefined) {
+        line.char_r = (row.char_r === '' || row.char_r === 'null') ? null : row.char_r;
+      }
+      if (row.emotion_l)     line.emotion_l = row.emotion_l;
+      if (row.emotion_r)     line.emotion_r = row.emotion_r;
       
       if (row.emotion)       line.emotion = row.emotion;
       if (row.char_anim)     line.charAnim = row.char_anim;

@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Gallery buttons (title screen + in-game icon)
-  const galleryBtns = [document.getElementById('btn-gallery'), document.getElementById('btn-gallery-game')];
+  const galleryBtns = [document.getElementById('btn-gallery'), document.getElementById('btn-gallery-global')];
   galleryBtns.forEach(btn => {
     if (btn) btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     container.innerHTML = '';
 
-    for (let i = 0; i <= 6; i++) {
+    for (let i = 0; i <= 5; i++) {
       const btn = document.createElement('div');
       btn.className = 'save-slot';
       if (i === 0) btn.style.border = '2px dashed var(--tdt-blue)';
@@ -315,6 +315,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-close-log').addEventListener('click', () => { game.playClick(); logOverlay.classList.add('hidden') });
   document.getElementById('btn-close-settings').addEventListener('click', () => { game.playClick(); settingsOverlay.classList.add('hidden') });
   document.getElementById('btn-close-gallery').addEventListener('click', () => { game.playClick(); galleryOverlay.classList.add('hidden') });
+  
+  const fsView = document.getElementById('fullscreen-view');
+  if (fsView) {
+    document.getElementById('btn-close-fullscreen').addEventListener('click', () => { game.playClick(); fsView.classList.add('hidden') });
+    fsView.addEventListener('click', () => fsView.classList.add('hidden')); // Đóng khi click ngoài
+  }
 
   // --- Naming Logic ---
   const mcNameOverlay = document.getElementById('mc-name-overlay');
@@ -357,8 +363,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       date: new Date().toLocaleString(),
       mcName: game.mcName
     }));
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3000);
+    // Tắt hiện toast làm phiền theo yêu cầu
+    // toast.classList.add('show');
+    // setTimeout(() => toast.classList.remove('show'), 3000);
   }
 
   // --- Gallery Logic ---
@@ -411,7 +418,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       if (isUnlocked) {
         item.addEventListener('click', () => {
-          window.open(imgUrl, '_blank');
+          game.playClick();
+          const fsImg = document.getElementById('fullscreen-img');
+          if (fsView && fsImg) {
+            fsImg.src = imgUrl;
+            fsView.classList.remove('hidden');
+          }
         });
       }
       galleryGrid.appendChild(item);

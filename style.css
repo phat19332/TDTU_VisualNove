@@ -568,12 +568,14 @@ body {
   overflow: hidden;
   color: #e2e8f0;
   font-family: var(--font-ui);
+  transform: scale(0.9);
+  transform-origin: top left;
   animation: musicSlideIn 0.3s ease-out;
 }
 
 @keyframes musicSlideIn {
-  from { opacity: 0; transform: translateX(-20px) scale(0.95); }
-  to { opacity: 1; transform: translateX(0) scale(1); }
+  from { opacity: 0; transform: translateX(-20px) scale(0.9) scaleX(0.95); }
+  to { opacity: 1; transform: translateX(0) scale(0.9) scaleX(1); }
 }
 
 /* Header */
@@ -1018,6 +1020,9 @@ body {
 
 .gallery-item.locked img {
   filter: brightness(0) contrast(0) opacity(0.3);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .gallery-item.locked::after {
