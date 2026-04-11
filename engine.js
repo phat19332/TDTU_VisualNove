@@ -28,6 +28,10 @@ export class VNEngine {
     this.bgmAudio.loop = true;
     this.sfxClick = new Audio(getAssetUrl('click.mp3'));
     
+    // BGM tracking for Music Player UI
+    this.currentBgmUrl = null;
+    this.onBgmChange = null; // Callback: (url) => {} — gọi khi BGM thay đổi
+    
     // Bind main click event
     this.ui.dialogueBox.addEventListener('click', () => {
       this.playClick();
@@ -120,6 +124,8 @@ export class VNEngine {
       if (line.bgm === "stop") {
         this.bgmAudio.pause();
         this.bgmAudio.currentTime = 0;
+        this.currentBgmUrl = null;
+        if (this.onBgmChange) this.onBgmChange(null);
       } else {
         // Chuẩn hóa đường dẫn để so sánh (tránh phát lại nhạc đang chạy)
         const absoluteBvUrl = new URL(line.bgm, window.location.href).href;
@@ -128,6 +134,7 @@ export class VNEngine {
         if (currentBvUrl !== absoluteBvUrl) {
           this.bgmAudio.src = absoluteBvUrl;
           this.bgmAudio.volume = this.bgmVolume;
+          this.currentBgmUrl = line.bgm;
           
           // Chơi nhạc và bắt lỗi auto-play
           const playPromise = this.bgmAudio.play();
@@ -136,6 +143,9 @@ export class VNEngine {
               console.warn("Auto-play bị trình duyệt chặn, chờ click tiếp theo: ", error);
             });
           }
+          
+          // Thông báo cho Music Player UI
+          if (this.onBgmChange) this.onBgmChange(line.bgm);
         } else if (this.bgmAudio.paused) {
           // Nếu nhạc đang dừng (do bị chặn trước đó) thì thử phát lại
           this.bgmAudio.play().catch(() => {});

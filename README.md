@@ -45,6 +45,39 @@ Cột `choices` phải nhập theo đúng định dạng JSON bên dưới:
 
 ---
 
+# 🎵 Hướng dẫn quản lý Nhạc (BGM)
+
+Hệ thống nhạc trong game hiện tại hoạt động theo cơ chế **Scene-Driven** (Nhạc theo cảnh):
+1. **Nhạc tự động đổi** dựa trên cột `bgm` trong bảng `scripts`.
+2. **Music Player (icon 🎵)** dùng để điều chỉnh âm lượng, tạm dừng và **hiển thị thông tin** bài hát đang phát.
+3. **Bảng `music` trên Supabase** đóng vai trò là "Thư viện Metadata". Nếu tên file trong cột `bgm` trùng với file trong bảng `music`, trình phát sẽ hiển thị Tên bài hát + Nghệ sĩ + Ảnh bìa đẹp mắt.
+
+### 1. Cách thiết lập Metadata cho bài hát (Bảng `music`)
+
+| Tên cột | Ý nghĩa | Cách điền |
+| :--- | :--- | :--- |
+| **title** | Tên bài hát | Ví dụ: `Tự hào sinh viên Tôn Đức Thắng`. |
+| **artist** | Nghệ sĩ | Ví dụ: `TDTU Chorus`. |
+| **url** | **Đường dẫn file** | Copy Public URL từ Storage. **Quan trọng:** Tên file phải trùng với tên file bạn điền trong bảng `scripts`. |
+| **cover_url** | Ảnh bìa | Link ảnh hiện trong Player (tùy chọn). |
+| **is_active** | Kích hoạt | Tích chọn để metadata này được nạp vào game. |
+
+### 2. Cách đổi nhạc theo từng Cảnh (Bảng `scripts`)
+Trong bảng `scripts`, tại cột **`bgm`**, bạn điền tên file nhạc (ví dụ: `tdtu_theme.mp3`).
+*   Khi game chạy đến dòng đó, nhạc sẽ tự đổi.
+*   Music Player sẽ tự tra cứu trong bảng `music` để hiện tên "Tự hào sinh viên Tôn Đức Thắng" thay vì hiện tên file khô khan.
+
+---
+
+### 3. Cách lấy Link nhạc từ Supabase Storage
+1. Upload file nhạc vào bucket `game-assets`.
+2. Truy cập tab **Storage** -> Bucket `game-assets`.
+3. Nhấn vào dấu 3 chấm cạnh file nhạc -> Chọn **Get public URL**.
+4. Dán link này vào cột **`url`** trong bảng `music`.
+
+
+---
+
 ## 🛠️ Công nghệ sử dụng
 - **Frontend**: Vanilla JavaScript + HTML5/CSS3 + Vite
 - **Backend**: Supabase (Database, Auth, Storage)

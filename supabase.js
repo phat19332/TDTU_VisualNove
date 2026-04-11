@@ -104,6 +104,32 @@ export async function fetchScript() {
 }
 
 /**
+ * Đọc danh sách nhạc từ bảng `music` trên Supabase
+ * Trả về mảng [{id, title, artist, url, cover_url, category}]
+ */
+export async function fetchMusic() {
+  if (!supabaseClient) return null;
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('music')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+
+    if (error) throw error;
+    if (!data || data.length === 0) return [];
+
+    console.log(`🎵 Loaded ${data.length} tracks from Supabase`);
+    return data;
+
+  } catch (err) {
+    console.error('❌ Lỗi fetch music từ Supabase:', err);
+    return [];
+  }
+}
+
+/**
  * Lưu game (Save) lên Supabase
  */
 export async function saveGame(playerId, slot, scriptIndex) {

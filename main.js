@@ -1,6 +1,6 @@
 import { VNEngine } from './engine.js';
 import { storyScript as localScript } from './gameData.js';
-import { initSupabase, fetchScript, saveGame, loadGame, getAllSaves, getAssetUrl } from './supabase.js';
+import { initSupabase, fetchScript, fetchMusic, saveGame, loadGame, getAllSaves, getAssetUrl } from './supabase.js';
 
 // Trạng thái Player
 let currentPlayerId = null;
@@ -304,5 +304,221 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-close-saveload').addEventListener('click', () => { game.playClick(); slOverlay.classList.add('hidden') });
   document.getElementById('btn-close-log').addEventListener('click', () => { game.playClick(); logOverlay.classList.add('hidden') });
   document.getElementById('btn-close-settings').addEventListener('click', () => { game.playClick(); settingsOverlay.classList.add('hidden') });
+
+  // ===================================================
+  // MUSIC PLAYER - Scene-Driven BGM Controller
+  // Hiển thị & điều khiển nhạc nền theo cốt truyện
+  // Dữ liệu metadata (tên, nghệ sĩ) lấy từ bảng music trên Supabase
+  // ===================================================
+  
+  const musicToggleBtn = document.getElementById('music-toggle-btn');
+  const musicPlayer = document.getElementById('music-player');
+  const musicCloseBtn = document.getElementById('music-close-btn');
+  const musicPlayBtn = document.getElementById('music-play');
+  const musicProgressEl = document.getElementById('music-progress');
+  const musicVolumeEl = document.getElementById('music-volume');
+  const musicCurrentTimeEl = document.getElementById('music-current-time');
+  const musicDurationEl = document.getElementById('music-duration');
+  const musicTrackTitleEl = document.getElementById('music-track-title');
+  const musicTrackArtistEl = document.getElementById('music-track-artist');
+  const musicCover = document.getElementById('music-cover');
+  const musicTracklistEl = document.getElementById('music-tracklist');
+
+  // Bảng tra cứu metadata: key = tên file nhạc, value = {title, artist, cover_url}
+  let bgmMetadata = {}; // Sẽ được nạp từ Supabase
+  let isSeekingMusic = false;
+
+  // Toggle Panel
+  musicToggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    musicPlayer.classList.remove('hidden');
+    musicToggleBtn.style.display = 'none';
+  });
+
+  musicCloseBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    musicPlayer.classList.add('hidden');
+    musicToggleBtn.style.display = 'flex';
+  });
+
+  // Ngăn click trên panel lan sang dialogue box
+  musicPlayer.addEventListener('click', (e) => e.stopPropagation());
+
+  // Format thời gian m:ss
+  function formatMusicTime(seconds) {
+    if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  // Trích tên file từ URL để so sánh với metadata
+  function extractFilename(urlOrPath) {
+    if (!urlOrPath) return '';
+    return urlOrPath.split('/').pop().split('?')[0].toLowerCase();
+  }
+
+  // Tìm metadata cho một URL nhạc
+  function findBgmMeta(bgmUrl) {
+    if (!bgmUrl) return null;
+    const filename = extractFilename(bgmUrl);
+    return bgmMetadata[filename] || null;
+  }
+
+  // Cập nhật UI "Now Playing" khi engine đổi BGM
+  function updateNowPlaying(bgmUrl) {
+    if (!bgmUrl) {
+      // Nhạc đã dừng
+      musicTrackTitleEl.textContent = 'Không có nhạc';
+      musicTrackArtistEl.textContent = 'Đang chờ scene tiếp theo...';
+      musicCover.innerHTML = '<div class="music-cover-placeholder">♪</div>';
+      musicPlayBtn.textContent = '▶';
+      musicPlayer.classList.remove('is-playing');
+      highlightActiveTrack(null);
+      return;
+    }
+
+    const meta = findBgmMeta(bgmUrl);
+    if (meta) {
+      musicTrackTitleEl.textContent = meta.title;
+      musicTrackArtistEl.textContent = meta.artist || 'Game OST';
+      if (meta.cover_url) {
+        let coverUrl = meta.cover_url;
+        if (!coverUrl.startsWith('http')) coverUrl = getAssetUrl(coverUrl);
+        musicCover.innerHTML = `<img src="${coverUrl}" alt="Cover">`;
+      } else {
+        musicCover.innerHTML = '<div class="music-cover-placeholder">♪</div>';
+      }
+    } else {
+      // Không có metadata → hiện tên file
+      const filename = extractFilename(bgmUrl);
+      musicTrackTitleEl.textContent = filename || 'BGM';
+      musicTrackArtistEl.textContent = 'Game OST';
+      musicCover.innerHTML = '<div class="music-cover-placeholder">♪</div>';
+    }
+
+    musicPlayBtn.textContent = '⏸';
+    musicPlayer.classList.add('is-playing');
+    highlightActiveTrack(bgmUrl);
+  }
+
+  // Highlight bài đang phát trong danh sách thư viện
+  function highlightActiveTrack(bgmUrl) {
+    const items = musicTracklistEl.querySelectorAll('.music-track-item');
+    const activeFilename = bgmUrl ? extractFilename(bgmUrl) : null;
+    items.forEach(item => {
+      const itemFilename = item.dataset.filename;
+      item.classList.toggle('is-active', itemFilename === activeFilename);
+    });
+  }
+
+  // Render thư viện BGM từ Supabase (chỉ hiển thị, không tự phát nhạc)
+  function renderBgmLibrary(tracks) {
+    musicTracklistEl.innerHTML = '';
+    if (!tracks || tracks.length === 0) {
+      musicTracklistEl.innerHTML = '<div class="music-tracklist-empty">Chưa có nhạc trong bảng <b>music</b> trên Supabase.<br>Nhạc vẫn phát theo cột <b>bgm</b> trong bảng scripts.</div>';
+      return;
+    }
+
+    const currentFilename = game.currentBgmUrl ? extractFilename(game.currentBgmUrl) : null;
+
+    tracks.forEach((track, idx) => {
+      const filename = extractFilename(track.url);
+      const isActive = filename === currentFilename;
+      
+      const item = document.createElement('div');
+      item.className = 'music-track-item' + (isActive ? ' is-active' : '');
+      item.dataset.filename = filename;
+      item.innerHTML = `
+        <span class="track-idx">${idx + 1}</span>
+        <div class="track-info">
+          <div class="track-name">${track.title}</div>
+          <div class="track-artist">${track.artist || 'Unknown'}</div>
+        </div>
+        <div class="track-playing-anim"><span></span><span></span><span></span></div>
+      `;
+      // Click vào thư viện → không phát nhạc, chỉ thông tin tham khảo
+      musicTracklistEl.appendChild(item);
+    });
+  }
+
+  // --- Kết nối với Engine's bgmAudio ---
+
+  // Play/Pause toggle điều khiển trực tiếp bgmAudio của engine
+  musicPlayBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const audio = game.bgmAudio;
+    
+    if (!audio.src || audio.src === '') return;
+
+    if (audio.paused) {
+      audio.play().catch(() => {});
+      musicPlayBtn.textContent = '⏸';
+      musicPlayer.classList.add('is-playing');
+    } else {
+      audio.pause();
+      musicPlayBtn.textContent = '▶';
+      musicPlayer.classList.remove('is-playing');
+    }
+  });
+
+  // Progress bar → cập nhật theo bgmAudio của engine
+  game.bgmAudio.addEventListener('timeupdate', () => {
+    if (isSeekingMusic) return;
+    const pct = (game.bgmAudio.currentTime / game.bgmAudio.duration) * 100;
+    musicProgressEl.value = isNaN(pct) ? 0 : pct;
+    musicCurrentTimeEl.textContent = formatMusicTime(game.bgmAudio.currentTime);
+    musicDurationEl.textContent = formatMusicTime(game.bgmAudio.duration);
+  });
+
+  musicProgressEl.addEventListener('mousedown', () => { isSeekingMusic = true; });
+  musicProgressEl.addEventListener('touchstart', () => { isSeekingMusic = true; });
+
+  musicProgressEl.addEventListener('input', (e) => {
+    e.stopPropagation();
+    if (game.bgmAudio.duration) {
+      game.bgmAudio.currentTime = (e.target.value / 100) * game.bgmAudio.duration;
+    }
+  });
+
+  musicProgressEl.addEventListener('mouseup', () => { isSeekingMusic = false; });
+  musicProgressEl.addEventListener('touchend', () => { isSeekingMusic = false; });
+
+  // Volume → điều khiển trực tiếp bgmVolume của engine
+  musicVolumeEl.addEventListener('input', (e) => {
+    e.stopPropagation();
+    const vol = e.target.value / 100;
+    game.bgmAudio.volume = vol;
+    game.bgmVolume = vol;
+  });
+
+  // Đăng ký callback: khi engine đổi BGM → cập nhật Music Player UI
+  game.onBgmChange = (bgmUrl) => {
+    updateNowPlaying(bgmUrl);
+  };
+
+  // --- Fetch BGM metadata từ Supabase ---
+  let allTracks = [];
+  if (supabaseReady) {
+    try {
+      const tracks = await fetchMusic();
+      if (tracks && tracks.length > 0) {
+        allTracks = tracks;
+        // Xây dựng bảng tra cứu metadata theo filename
+        tracks.forEach(t => {
+          const filename = extractFilename(t.url);
+          bgmMetadata[filename] = {
+            title: t.title,
+            artist: t.artist,
+            cover_url: t.cover_url
+          };
+        });
+        console.log(`🎵 BGM Metadata: Loaded ${tracks.length} entries`);
+      }
+    } catch (e) {
+      console.warn('🎵 BGM Metadata: Failed to fetch', e);
+    }
+  }
+  renderBgmLibrary(allTracks);
 
 });
