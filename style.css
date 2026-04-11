@@ -129,103 +129,6 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  /* Gallery Mode */
-.gallery-content {
-  width: 90vw;
-  max-width: 1000px;
-  max-height: 85vh;
-}
-
-.gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
-  padding: 20px;
-  overflow-y: auto;
-  max-height: 65vh;
-}
-
-.gallery-item {
-  position: relative;
-  aspect-ratio: 16/9;
-  border-radius: 12px;
-  overflow: hidden;
-  background: rgba(0,0,0,0.4);
-  border: 2px solid rgba(255,255,255,0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-}
-
-.gallery-item:hover {
-  transform: translateY(-5px) scale(1.02);
-  border-color: var(--tdt-blue);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-}
-
-.gallery-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: filter 0.5s;
-}
-
-.gallery-item.locked img {
-  filter: brightness(0) contrast(0) opacity(0.3);
-}
-
-.gallery-item.locked::after {
-  content: "🔒 Locked";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: rgba(255,255,255,0.5);
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-.gallery-item .gallery-label {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 8px;
-  background: linear-gradient(transparent, rgba(0,0,0,0.8));
-  color: white;
-  font-size: 0.8rem;
-  text-align: center;
-}
-
-/* Auto-save Toast */
-.autosave-toast {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(10px);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 50px;
-  border: 1px solid rgba(255,255,255,0.1);
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transform: translateY(100px);
-  opacity: 0;
-  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  z-index: 9999;
-}
-
-.autosave-toast.show {
-  transform: translateY(0);
-  opacity: 1;
-}
-
-.autosave-toast span {
-  display: flex;
-  align-items: center;
-}
   padding-bottom: 50px; 
 }
 
@@ -1069,4 +972,126 @@ body {
   border-radius: 2px;
 }
 
+/* ============================================ */
+/* GALLERY & AUTO-SAVE                          */
+/* ============================================ */
 
+/* Gallery Overlay */
+.gallery-content {
+  width: 90vw;
+  max-width: 1000px;
+  max-height: 85vh;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+  padding: 15px;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.gallery-item {
+  position: relative;
+  aspect-ratio: 16/9;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.4);
+  border: 2px solid rgba(255,255,255,0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.gallery-item:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: var(--tdt-blue);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+.gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: filter 0.5s;
+}
+
+.gallery-item.locked img {
+  filter: brightness(0) contrast(0) opacity(0.3);
+}
+
+.gallery-item.locked::after {
+  content: "🔒";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255,255,255,0.5);
+  font-size: 1.5rem;
+}
+
+.gallery-item .gallery-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 6px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.8));
+  color: white;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+/* Auto-save Toast */
+.autosave-toast {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 50px;
+  border: 1px solid rgba(255,255,255,0.1);
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 9999;
+}
+
+.autosave-toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Gallery Icon Button (trên Game Screen) */
+.gallery-icon-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 15;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(10px);
+  font-size: 1rem;
+  cursor: pointer;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  opacity: 0.7;
+}
+
+.gallery-icon-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+  background: rgba(10, 69, 149, 0.8);
+}

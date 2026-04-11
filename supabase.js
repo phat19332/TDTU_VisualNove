@@ -80,6 +80,7 @@ export async function fetchScript() {
       if (row.speaker_color) line.speakerColor = row.speaker_color;
       
       line.text = row.dialogue || '';
+      line.dialogue = row.dialogue || '';
 
       // Parse choices: Format "Text1|id1;;Text2|id2"
       if (row.choices && row.choices.trim() !== '') {
