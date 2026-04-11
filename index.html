@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Time, Dreams, Trials & Us</title>
   <link rel="stylesheet" href="/style.css">
   <!-- Google Fonts: Inter cho Text thông thường và Noto Serif cho Dialogue -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap"
+    rel="stylesheet">
   <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
 <body>
   <div id="game-container">
     <!-- Màn Hình Giới Thiệu Studio -->
@@ -34,6 +38,7 @@
         <div class="menu-buttons">
           <button id="btn-start" class="menu-btn">Bắt Đầu Mới</button>
           <button id="btn-load" class="menu-btn">Tiếp Tục</button>
+          <button id="btn-gallery" class="menu-btn" style="background: rgba(255,165,0,0.2); border-color: rgba(255,165,0,0.4);">📸 Thư Viện Ảnh</button>
           <button id="btn-settings" class="menu-btn">Cài Đặt</button>
         </div>
       </div>
@@ -43,10 +48,15 @@
     <div id="game-screen" class="screen">
       <!-- Lớp Nền -->
       <div id="layer-bg" class="layer"></div>
-      
-      <!-- Lớp Nhân vật -->
-      <div id="layer-character" class="layer">
-        <img id="char-sprite" src="" alt="Character" style="opacity: 0;">
+
+      <!-- Lớp Nhân vật (Stage) -->
+      <div id="layer-character" class="layer character-stage">
+        <div class="char-slot left" id="slot-l">
+          <img id="char-l" src="" alt="Left Character" style="opacity: 0;">
+        </div>
+        <div class="char-slot right" id="slot-r">
+          <img id="char-r" src="" alt="Right Character" style="opacity: 0;">
+        </div>
       </div>
 
       <!-- Quick Menu trên Box Thoại -->
@@ -67,114 +77,160 @@
           <div id="text-caret" class="caret">▼</div>
         </div>
       </div>
-      
+
       <!-- Overlay Lựa chọn (Choices) -->
       <div id="choices-overlay" class="choices-overlay hidden">
         <!-- Buttons sẽ được JavaScript tạo động ở đây -->
       </div>
 
-      <!-- Music Player Toggle Button -->
-      <button id="music-toggle-btn" class="music-toggle-btn" title="Mở/Đóng trình phát nhạc">
-        🎵
-      </button>
+    </div>
+  </div>
 
-      <!-- Music Player Panel (Scene-driven BGM Controller) -->
-      <div id="music-player" class="music-player hidden">
-        <div class="music-player-header">
-          <span class="music-player-title">🎶 Nhạc Nền (BGM)</span>
-          <button id="music-close-btn" class="music-close-btn" title="Đóng">✕</button>
-        </div>
+  <!-- Music Player Toggle Button (Moved out of game-screen for global visibility) -->
+  <button id="music-toggle-btn" class="music-toggle-btn" title="Mở/Đóng trình phát nhạc" style="display: none;">
+    🎵
+  </button>
 
-        <!-- Now Playing -->
-        <div class="music-now-playing">
-          <div class="music-cover" id="music-cover">
-            <div class="music-cover-placeholder">♪</div>
-          </div>
-          <div class="music-info">
-            <div class="music-track-title" id="music-track-title">Chưa có nhạc</div>
-            <div class="music-track-artist" id="music-track-artist">Chờ cốt truyện...</div>
-          </div>
-        </div>
+  <!-- Music Player Panel (Moved out of game-screen for global visibility) -->
+  <div id="music-player" class="music-player">
+    <div class="music-player-header">
+      <span class="music-player-title">🎶 Nhạc Nền (BGM)</span>
+      <button id="music-close-btn" class="music-close-btn" title="Đóng">✕</button>
+    </div>
 
-        <!-- Progress Bar -->
-        <div class="music-progress-wrapper">
-          <span class="music-time" id="music-current-time">0:00</span>
-          <input type="range" id="music-progress" class="music-progress" min="0" max="100" value="0" step="0.1">
-          <span class="music-time" id="music-duration">0:00</span>
+    <!-- Now Playing -->
+    <div class="music-now-playing">
+      <div class="music-cover" id="music-cover">
+        <div class="music-cover-placeholder">♪</div>
+      </div>
+      <div class="music-info">
+        <div class="music-track-title-wrapper">
+          <div class="music-track-title" id="music-track-title">Chưa có nhạc</div>
+          <span id="music-lock-icon" class="music-lock-icon" title="Nhạc đã được khoá theo cốt truyện"
+            style="display: none;">🔒</span>
         </div>
-
-        <!-- Controls (chỉ Play/Pause + Volume, không có Prev/Next) -->
-        <div class="music-controls">
-          <button id="music-play" class="music-ctrl-btn music-play-btn" title="Phát / Dừng">▶</button>
-          <div class="music-volume-group">
-            <span class="music-vol-icon">🔊</span>
-            <input type="range" id="music-volume" class="music-volume" min="0" max="100" value="100">
-          </div>
-        </div>
-
-        <!-- BGM Library (Thư viện nhạc từ Supabase - Tham khảo) -->
-        <div class="music-tracklist-header">Thư Viện BGM (Supabase)</div>
-        <div class="music-tracklist" id="music-tracklist">
-          <div class="music-tracklist-empty">Đang tải...</div>
-        </div>
+        <div class="music-track-artist" id="music-track-artist">Chờ cốt truyện...</div>
       </div>
     </div>
 
-    <!-- Overlay: Menu Lưu / Tải (Save/Load) -->
-    <div id="saveload-overlay" class="modal-overlay hidden">
-      <div class="modal-content">
-        <h2 id="sl-title" class="modal-title">Save Game</h2>
-        <div class="slots-container" id="slots-container">
-          <!-- 6 slots sẽ được render qua JS -->
-        </div>
-        <button id="btn-close-saveload" class="modal-close-btn">Đóng</button>
+    <!-- Progress Bar -->
+    <div class="music-progress-wrapper">
+      <span class="music-time" id="music-current-time">0:00</span>
+      <input type="range" id="music-progress" class="music-progress" min="0" max="100" value="0" step="0.1">
+      <span class="music-time" id="music-duration">0:00</span>
+    </div>
+
+    <!-- Controls (chỉ Play/Pause + Volume, không có Prev/Next) -->
+    <div class="music-controls">
+      <button id="music-play" class="music-ctrl-btn music-play-btn" title="Phát / Dừng">▶</button>
+      <div class="music-playlist-group">
+        <button id="music-loop-all" class="music-ctrl-btn mini-btn" title="Chế độ Phát Playlist (Tắt/Bật)">🔁</button>
+      </div>
+      <div class="music-volume-group">
+        <span class="music-vol-icon">🔊</span>
+        <input type="range" id="music-volume" class="music-volume" min="0" max="100" value="100">
       </div>
     </div>
 
-    <!-- Overlay: Log Hội Thoại -->
-    <div id="log-overlay" class="modal-overlay hidden">
-      <div class="modal-content log-content">
-        <h2 class="modal-title">Lịch Sử Trò Chuyện</h2>
-        <div id="log-scroll-area" class="log-scroll-area">
-          <!-- Các đoạn log sẽ xuất hiện ở đây -->
-        </div>
-        <button id="btn-close-log" class="modal-close-btn">Đóng</button>
-      </div>
+    <!-- BGM Library (Thư viện nhạc từ Supabase - Tham khảo) -->
+    <div class="music-tracklist-header">Thư Viện BGM</div>
+    <div class="music-tracklist" id="music-tracklist">
+      <div class="music-tracklist-empty">Đang tải...</div>
     </div>
+  </div>
 
-    <!-- Overlay: Nhập Player ID -->
-    <div id="player-id-overlay" class="modal-overlay hidden">
-      <div class="modal-content player-id-content">
-        <h2 class="modal-title">Nhập Tên / ID Người Chơi</h2>
-        <p style="text-align:center;color:#666;font-size:0.95rem;">Dùng để lưu tiến trình game trên máy chủ.<br>Bạn có thể nhập bất kỳ tên gì!</p>
-        <input type="text" id="player-id-input" class="player-id-input" placeholder="VD: HaoNhien2026" maxlength="30">
-        <button id="btn-confirm-player" class="modal-close-btn" style="background:var(--tdt-blue);">Xác Nhận & Chơi</button>
-        <button id="btn-skip-player" class="modal-close-btn" style="background:#999;margin-top:5px;font-size:0.9rem;padding:8px 30px;">Chơi Ẩn Danh (Không Lưu Online)</button>
+  <!-- Overlay: Menu Lưu / Tải (Save/Load) -->
+  <div id="saveload-overlay" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h2 id="sl-title" class="modal-title">Save Game</h2>
+      <div class="slots-container" id="slots-container">
+        <!-- 6 slots sẽ được render qua JS -->
       </div>
+      <button id="btn-close-saveload" class="modal-close-btn">Đóng</button>
     </div>
+  </div>
 
-    <!-- Overlay: Settings -->
-    <div id="settings-overlay" class="modal-overlay hidden">
-      <div class="modal-content">
-        <h2 class="modal-title">Cài Đặt</h2>
-        <div class="settings-group">
-          <label for="bgm-volume">Âm Lượng Nhạc Nền (BGM): <span id="bgm-val">100</span>%</label>
-          <input type="range" id="bgm-volume" min="0" max="100" value="100">
-        </div>
-        <div class="settings-group">
-          <label for="sfx-volume">Âm Lượng Hiệu Ứng (SFX): <span id="sfx-val">100</span>%</label>
-          <input type="range" id="sfx-volume" min="0" max="100" value="100">
-        </div>
-        <div class="settings-group">
-          <label for="text-speed">Tốc Độ Chữ: <span id="speed-val">Bình thường</span></label>
-          <input type="range" id="text-speed" min="10" max="100" value="25" step="5" dir="rtl"> <!-- text speed ms per char, lower is faster -->
-        </div>
-        <button id="btn-close-settings" class="modal-close-btn">Xong</button>
+  <!-- Overlay: Log Hội Thoại -->
+  <div id="log-overlay" class="modal-overlay hidden">
+    <div class="modal-content log-content">
+      <h2 class="modal-title">Lịch Sử Trò Chuyện</h2>
+      <div id="log-scroll-area" class="log-scroll-area">
+        <!-- Các đoạn log sẽ xuất hiện ở đây -->
       </div>
+      <button id="btn-close-log" class="modal-close-btn">Đóng</button>
     </div>
+  </div>
+
+  <!-- Overlay: Nhập Player ID -->
+  <div id="player-id-overlay" class="modal-overlay hidden">
+    <div class="modal-content player-id-content">
+      <h2 class="modal-title">Nhập Tên / ID Người Chơi</h2>
+      <p style="text-align:center;color:#666;font-size:0.95rem;">Dùng để lưu tiến trình game trên máy chủ.<br>Bạn có thể
+        nhập bất kỳ tên gì!</p>
+      <input type="text" id="player-id-input" class="player-id-input" placeholder="VD: HaoNhien2026" maxlength="30">
+      <button id="btn-confirm-player" class="modal-close-btn" style="background:var(--tdt-blue);">Xác Nhận &
+        Chơi</button>
+      <button id="btn-skip-player" class="modal-close-btn"
+        style="background:#999;margin-top:5px;font-size:0.9rem;padding:8px 30px;">Chơi Ẩn Danh (Không Lưu
+        Online)</button>
+    </div>
+  </div>
+
+  <!-- Overlay: Settings -->
+  <div id="settings-overlay" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h2 class="modal-title">Cài Đặt</h2>
+      <div class="settings-group">
+        <label for="bgm-volume">Âm Lượng Nhạc Nền (BGM): <span id="bgm-val">100</span>%</label>
+        <input type="range" id="bgm-volume" min="0" max="100" value="100">
+      </div>
+      <div class="settings-group">
+        <label for="sfx-volume">Âm Lượng Hiệu Ứng (SFX): <span id="sfx-val">100</span>%</label>
+        <input type="range" id="sfx-volume" min="0" max="100" value="100">
+      </div>
+      <div class="settings-group">
+        <label for="text-speed">Tốc Độ Chữ: <span id="speed-val">Bình thường</span></label>
+        <input type="range" id="text-speed" min="10" max="100" value="25" step="5" dir="rtl">
+        <!-- text speed ms per char, lower is faster -->
+      </div>
+      <button id="btn-close-settings" class="modal-close-btn">Xong</button>
+    </div>
+  </div>
 
   </div>
-  
+
+    <!-- Overlay: Chọn Tên Nhân Vật -->
+    <div id="mc-name-overlay" class="modal-overlay hidden">
+      <div class="modal-content mc-name-content">
+        <h2 class="modal-title">Đặt Tên Cho Nhân Vật</h2>
+        <p style="text-align:center;color:#666;font-size:0.95rem;margin-bottom:20px;">
+          Tên này sẽ xuất hiện trong các đoạn hội thoại suốt trò chơi.
+        </p>
+        <input type="text" id="mc-name-input" class="player-id-input" placeholder="Tên bạn mong muốn..." maxlength="20">
+        <button id="btn-confirm-name" class="modal-close-btn" style="background:var(--tdt-blue); margin-top:20px;">
+          Bắt Đầu Hành Trình
+        </button>
+      </div>
+    </div>
+
+    <!-- Overlay: Thư Viện Ảnh (Gallery) -->
+    <div id="gallery-overlay" class="modal-overlay hidden">
+      <div class="modal-content gallery-content">
+        <h2 class="modal-title">🖼️ Gallery - Kỷ Niệm TDTU</h2>
+        <div id="gallery-grid" class="gallery-grid">
+           <!-- Ảnh sẽ được load qua JS -->
+        </div>
+        <button id="btn-close-gallery" class="modal-close-btn">Quay Lại</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Thông báo Auto-save -->
+  <div id="autosave-toast" class="autosave-toast">
+    <span>💾 Đã tự động lưu...</span>
+  </div>
+
   <script type="module" src="/main.js"></script>
 </body>
+
 </html>

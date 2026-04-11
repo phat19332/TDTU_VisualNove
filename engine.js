@@ -30,8 +30,28 @@ export class VNEngine {
     
     // BGM tracking for Music Player UI
     this.currentBgmUrl = null;
-    this.onBgmChange = null; // Callback: (url) => {} — gọi khi BGM thay đổi
+    this.onBgmChange = null; // Callback: (url) => {}
+    this.onBgmLockChange = null; // Callback: (isLocked) => {}
+    this.isPlaylistMode = false; // Mặc định lặp 1 bài
     
+    // Player State
+    this.mcName = "Người chơi"; 
+    this.onAutoSave = null; // Callback trigger auto save
+    this.onCgUnlock = null; // Callback trigger gallery unlock
+
+    // Character Slot Tracking (lưu trữ tên nhân vật đang đứng ở mỗi slot)
+    this.slotState = {
+      l: { name: null, id: null }, 
+      r: { name: null, id: null }
+    };
+
+    // Bắt sự kiện kết thúc nhạc để chuyển bài (nếu bật Playlist)
+    this.bgmAudio.addEventListener('ended', () => {
+      if (this.isPlaylistMode && this.onPlaylistNext) {
+        this.onPlaylistNext();
+      }
+    });
+
     // Bind main click event
     this.ui.dialogueBox.addEventListener('click', () => {
       this.playClick();
@@ -107,17 +127,24 @@ export class VNEngine {
   }
 
   renderLine(line) {
-    this.ui.textCaret.style.display = 'none';
+    if (!line) return;
 
-    // Log tracking
-    if (line.text) {
-      this.logHistory.push({ speaker: line.speaker || "", text: line.text });
+    // 1. Xử lý Thay thế Biến (MC Name)
+    let processedDialogue = line.dialogue || "";
+    processedDialogue = processedDialogue.replace(/\{Name\}/g, this.mcName);
+    processedDialogue = processedDialogue.replace(/\{name\}/g, this.mcName);
+
+    // 2. Xử lý CG Unlock (Gallery)
+    if (line.cg_id && this.onCgUnlock) {
+      this.onCgUnlock(line.cg_id, line.bg);
     }
 
-    // Đổi background
+    // 3. Xử lý Nền (Background)
     if (line.bg) {
       this.ui.layerBg.style.backgroundImage = `url('${getAssetUrl(line.bg)}')`;
     }
+
+    this.ui.textCaret.style.display = 'none';
 
     // Đổi/Phát nhạc nền (BGM)
     if (line.bgm) {
@@ -151,30 +178,100 @@ export class VNEngine {
           this.bgmAudio.play().catch(() => {});
         }
       }
+
+      // Xử lý Khóa nhạc (BGM Lock)
+      const isLocked = !!line.bgm_lock;
+      if (this.onBgmLockChange) this.onBgmLockChange(isLocked);
     }
 
-    // Đổi nhân vật và Emotion
-    if (line.char !== undefined) {
-      if (line.char === null || line.char === 'null') {
-        this.ui.charSprite.style.opacity = '0';
-      } else {
-        let spritePath = line.char;
-        
-        // Nếu là tên ngắn (VD: hao_nhien) -> Build path online
+    // ===================================================
+    // Đổi nhân vật và Emotion (Hệ thống Stage mới)
+    // ===================================================
+
+    // Xử lý dữ liệu fallback (tương thích ngược với kịch bản cũ dùng line.char)
+    const charL = line.char_l || (line.char !== undefined ? line.char : undefined);
+    const charR = line.char_r || undefined;
+    const emoL = line.emotion_l || (line.char_l ? line.emotion_l : line.emotion);
+    const emoR = line.emotion_r || undefined;
+
+    // Helper để cập nhật một slot
+    const updateSlot = (side, charId, emotion) => {
+        const slotImg = side === 'l' ? this.ui.charL : this.ui.charR;
+        const slotDiv = side === 'l' ? this.ui.slotL : this.ui.slotR;
+
+        if (charId === undefined) return; // Không có yêu cầu đổi thì giữ nguyên
+
+        if (charId === null || charId === 'null') {
+            slotImg.style.opacity = '0';
+            this.slotState[side] = { name: null, id: null };
+            return;
+        }
+
+        // Build path
+        let spritePath = charId;
         if (!spritePath.startsWith('http') && !spritePath.includes('/')) {
             const ext = spritePath.includes('.') ? '' : '.png';
-            const emotionSuffix = line.emotion ? '_' + line.emotion : '';
-            spritePath = getAssetUrl(`${spritePath}${emotionSuffix}${ext}`);
+            const emoSuffix = emotion ? '_' + emotion : '';
+            spritePath = getAssetUrl(`${spritePath}${emoSuffix}${ext}`);
         } else {
-            // Nếu là path cũ (/assets/...) -> Convert sang URL online
             spritePath = getAssetUrl(spritePath);
         }
+
+        slotImg.src = spritePath;
+        slotImg.style.opacity = '1';
+        slotDiv.classList.add('fade-in');
+        setTimeout(() => slotDiv.classList.remove('fade-in'), 800);
         
-        this.ui.charSprite.src = spritePath;
-        this.ui.charSprite.style.opacity = '1';
-        this.ui.charSprite.className = line.charAnim || 'fade-in';
-      }
-    }
+        // Lưu state để tí đối chiếu Focus
+        this.slotState[side] = { 
+            name: line.speaker && charId === line.char_name ? line.speaker : charId,
+            id: charId 
+        };
+    };
+
+    updateSlot('l', charL, emoL);
+    updateSlot('r', charR, emoR);
+
+    // ===================================================
+    // Focus Logic (Sáng/Tối - Đẩy sang bên)
+    // ===================================================
+    const applyFocus = () => {
+        const speaker = line.speaker ? line.speaker.toLowerCase() : null;
+        
+        // Helper so khớp tên
+        const isSpeaker = (slot) => {
+            if (!speaker || !slot.id) return false;
+            // So khớp ID (hao_nhien) hoặc Name (Hạo Nhiên)
+            return slot.id.toLowerCase().includes(speaker) || 
+                   (slot.name && slot.name.toLowerCase().includes(speaker));
+        };
+
+        const leftIsSpeaking = isSpeaker(this.slotState.l);
+        const rightIsSpeaking = isSpeaker(this.slotState.r);
+
+        // Reset classes
+        this.ui.slotL.classList.remove('char-focus', 'char-dim', 'char-neutral');
+        this.ui.slotR.classList.remove('char-focus', 'char-dim', 'char-neutral');
+
+        if (leftIsSpeaking && rightIsSpeaking) {
+            // Cả hai cùng nói? (Hiếm) -> Để sáng cả hai
+            this.ui.slotL.classList.add('char-focus');
+            this.ui.slotR.classList.add('char-focus');
+        } else if (leftIsSpeaking) {
+            this.ui.slotL.classList.add('char-focus');
+            if (this.slotState.r.id) this.ui.slotR.classList.add('char-dim');
+        } else if (rightIsSpeaking) {
+            this.ui.slotR.classList.add('char-focus');
+            if (this.slotState.l.id) this.ui.slotL.classList.add('char-dim');
+        } else {
+            // Không ai trong slots đang nói (Narrator) -> Để trung tính
+            this.ui.slotL.classList.add('char-neutral');
+            this.ui.slotR.classList.add('char-neutral');
+        }
+    };
+
+    applyFocus();
+
 
     // Tên người nói
     if (line.speaker) {
@@ -203,34 +300,46 @@ export class VNEngine {
       }
     }
     
-    this.typeText(line.text, processedChoices);
+    // 8. Lưu Log
+    this.logHistory.push({
+      speaker: line.speaker || "Dẫn chuyện",
+      text: processedDialogue
+    });
+
+    // 9. Auto Save Trigger
+    if (this.onAutoSave && !line.choices) {
+      this.onAutoSave();
+    }
+    
+    this.typeText(processedDialogue, processedChoices);
   }
 
+  // Phương pháp hỗ trợ Typewriter với dialogue đã xử lý
   typeText(text, choices) {
+    let i = 0;
     this.isTyping = true;
-    this.ui.dialogueText.innerHTML = '';
+    this.ui.dialogueText.textContent = "";
     clearInterval(this.typewriterTimer);
     
-    let i = 0;
-    
-    // Tốc độ đánh chữ (Skip mode thì chạy thật nhanh)
     const speed = this.isSkipMode ? 2 : this.textSpeed;
-
+    
     this.typewriterTimer = setInterval(() => {
-      this.ui.dialogueText.innerHTML += text.charAt(i);
+      this.ui.dialogueText.textContent += text.charAt(i);
       i++;
       if (i >= text.length) {
-        this.completeTyping(text, choices);
+        this.completeTyping(choices);
       }
-    }, speed); 
+    }, speed);
   }
 
-  completeTyping(text = null, choices = null) {
+  completeTyping(choices = null) {
     clearInterval(this.typewriterTimer);
-    this.isTyping = false;
-    
     const line = this.script[this.currentIndex];
-    this.ui.dialogueText.innerHTML = text || line.text;
+    let text = line.dialogue || line.text || "";
+    text = text.replace(/\{Name\}/g, this.mcName);
+    text = text.replace(/\{name\}/g, this.mcName);
+    this.ui.dialogueText.textContent = text;
+    this.isTyping = false;
     
     // Parse choices if missing (thường xảy ra khi người dùng click tua nhanh câu thoại)
     let finalChoices = choices;

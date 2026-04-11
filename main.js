@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const playStudioSound = () => {
     const introSound = new Audio(getAssetUrl('studio_intro.mp3'));
     introSound.volume = 0.6;
-    
+
     const attemptPlay = () => {
       introSound.play()
         .then(() => {
@@ -30,24 +30,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Mồi sẵn: Click hoặc bấm phím bất kỳ đều sẽ kích hoạt nhạc logo
     document.addEventListener('click', attemptPlay);
     document.addEventListener('keydown', attemptPlay);
-    
+
     // Thử phát ngay (nếu trình duyệt đã cho phép từ trước)
     attemptPlay();
   };
 
   playStudioSound();
-  
+
   // Áp dụng Logo Studio
   const fegLogoImg = document.getElementById('feg-logo-img');
   if (fegLogoImg) {
-      fegLogoImg.src = getAssetUrl('feg_logo.png'); // Sẽ tự động lấy từ Supabase Storage nếu bạn up file mang tên feg_logo.png lên đó
+    fegLogoImg.src = getAssetUrl('feg_logo.png'); // Sẽ tự động lấy từ Supabase Storage nếu bạn up file mang tên feg_logo.png lên đó
   }
 
   // Áp dụng Poster từ Supabase
 
   const posterDiv = document.querySelector('.splash-poster');
   if (posterDiv) {
-      posterDiv.style.backgroundImage = `url('${getAssetUrl('poster.png')}')`;
+    posterDiv.style.backgroundImage = `url('${getAssetUrl('poster.png')}')`;
   }
 
   // --- Khởi tạo Supabase ---
@@ -75,18 +75,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 1. Kết thúc giới thiệu Studio (sau 3.5s)
     if (studioScreen) studioScreen.classList.remove('active');
     if (splashScreen) splashScreen.classList.add('active');
-    
+
     // 2. Chuyển từ Loading sang Title (sau 5s nữa)
     setTimeout(() => {
       splashScreen.classList.remove('active');
       titleScreen.classList.add('active');
-      
+
       // Phát nhạc nền ngay tại màn hình Title (lấy bài đầu tiên trong kịch bản)
       if (gameScript && gameScript[0] && gameScript[0].bgm) {
-          game.playBGM(gameScript[0].bgm);
+        game.playBGM(gameScript[0].bgm);
       }
     }, 5000);
-    
+
   }, 3500);
 
   // --- Khởi tạo UI Elements ---
@@ -94,7 +94,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     titleScreen: titleScreen,
     gameScreen: document.getElementById('game-screen'),
     layerBg: document.getElementById('layer-bg'),
-    charSprite: document.getElementById('char-sprite'),
+    // charSprite cũ giữ lại cho tương thích ngược (trỏ vào slot trái)
+    charSprite: document.getElementById('char-l'),
+    // Mới: Hỗ trợ 2 nhân vật
+    charL: document.getElementById('char-l'),
+    charR: document.getElementById('char-r'),
+    slotL: document.getElementById('slot-l'),
+    slotR: document.getElementById('slot-r'),
     dialogueBox: document.getElementById('dialogue-box'),
     nameTag: document.getElementById('name-tag'),
     dialogueText: document.getElementById('dialogue-text'),
@@ -130,7 +136,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     useOnlineSave = true;
     playerIdOverlay.classList.add('hidden');
     game.playClick();
-    game.start();
+    
+    // TIẾP THEO: Hiện modal đặt tên MC
+    showMcNameModal();
   });
 
   document.getElementById('btn-skip-player').addEventListener('click', () => {
@@ -138,7 +146,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     useOnlineSave = false;
     playerIdOverlay.classList.add('hidden');
     game.playClick();
-    game.start();
+    
+    // TIẾP THEO: Hiện modal đặt tên MC
+    showMcNameModal();
   });
 
   // --- Start & Load from Title ---
@@ -160,6 +170,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-settings').addEventListener('click', () => {
     game.playClick();
     settingsOverlay.classList.remove('hidden');
+  });
+
+  document.getElementById('btn-gallery').addEventListener('click', () => {
+    game.playClick();
+    openGallery();
   });
 
   // --- Quick Menu Màn Hình Game ---
@@ -196,11 +211,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       onlineSaves = await getAllSaves(currentPlayerId);
     }
 
-    container.innerHTML = '';
-
-    for (let i = 1; i <= 6; i++) {
+    // Lấy tất cả slots bao gồm cả slot 0 (Auto-save)
+    for (let i = 0; i <= 6; i++) {
       const btn = document.createElement('div');
       btn.className = 'save-slot';
+      if (i === 0) btn.style.border = '2px dashed var(--tdt-blue)';
 
       // Tìm trong online saves trước, nếu không có thì LocalStorage
       const onlineSave = onlineSaves.find(s => s.slot === i);
@@ -210,7 +225,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       let source = '';
 
       if (onlineSave) {
-        saveData = { index: onlineSave.script_index, date: new Date(onlineSave.saved_at).toLocaleString() };
+        saveData = { 
+            index: onlineSave.script_index, 
+            date: new Date(onlineSave.saved_at).toLocaleString(),
+            mcName: onlineSave.mc_name
+        };
         source = '🌐';
       } else if (localSaveJSON) {
         saveData = JSON.parse(localSaveJSON);
@@ -218,9 +237,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       if (saveData) {
-        btn.innerHTML = `<span class="slot-filled">${source} Slot ${i}</span><span class="slot-date">${saveData.date}</span>`;
+        const title = i === 0 ? "[AUTO-SAVE]" : `Slot ${i}`;
+        const namePart = saveData.mcName ? ` | ${saveData.mcName}` : '';
+        btn.innerHTML = `<span class="slot-filled">${source} ${title}${namePart}</span><span class="slot-date">${saveData.date}</span>`;
       } else {
-        btn.innerHTML = `<span class="slot-empty">Slot ${i} - Trống</span>`;
+        const title = i === 0 ? "[AUTO-SAVE - Trống]" : `Slot ${i} - Trống`;
+        btn.innerHTML = `<span class="slot-empty">${title}</span>`;
       }
 
       btn.addEventListener('click', async (e) => {
@@ -228,11 +250,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         game.playClick();
 
         if (saveLoadMode === 'save') {
+          if (i === 0) return alert("Slot 0 dành riêng cho Auto-save, hãy chọn Slot khác!");
           if (!ui.gameScreen.classList.contains('active')) return alert("Không lưu được khi đang ở ngoài Menu!");
 
           const data = {
             index: game.currentIndex,
-            date: new Date().toLocaleString()
+            date: new Date().toLocaleString(),
+            mcName: game.mcName
           };
 
           // Lưu LocalStorage luôn (fallback)
@@ -240,7 +264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           // Lưu online nếu có player ID
           if (useOnlineSave && currentPlayerId) {
-            await saveGame(currentPlayerId, i, game.currentIndex);
+            await saveGame(currentPlayerId, i, game.currentIndex, game.mcName);
           }
 
           renderSlots();
@@ -249,6 +273,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           // Load
           if (saveData) {
             slOverlay.classList.add('hidden');
+            game.mcName = saveData.mcName || "Người chơi";
             game.start();
             game.currentIndex = saveData.index;
             game.renderLine(game.script[game.currentIndex]);
@@ -304,13 +329,113 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-close-saveload').addEventListener('click', () => { game.playClick(); slOverlay.classList.add('hidden') });
   document.getElementById('btn-close-log').addEventListener('click', () => { game.playClick(); logOverlay.classList.add('hidden') });
   document.getElementById('btn-close-settings').addEventListener('click', () => { game.playClick(); settingsOverlay.classList.add('hidden') });
+  document.getElementById('btn-close-gallery').addEventListener('click', () => { game.playClick(); galleryOverlay.classList.add('hidden') });
+
+  // --- Naming Logic ---
+  const mcNameOverlay = document.getElementById('mc-name-overlay');
+  const mcNameInput = document.getElementById('mc-name-input');
+  
+  function showMcNameModal() {
+    mcNameOverlay.classList.remove('hidden');
+  }
+
+  document.getElementById('btn-confirm-name').addEventListener('click', () => {
+    const name = mcNameInput.value.trim();
+    game.mcName = name || "Người chơi";
+    mcNameOverlay.classList.add('hidden');
+    game.playClick();
+    
+    // Tải dữ liệu toàn cục (Gallery) trước khi bắt đầu
+    syncGlobalData().then(() => {
+        game.start();
+    });
+  });
+
+  // --- Auto-save Logic ---
+  let lastAutoSaveTime = 0;
+  game.onAutoSave = () => {
+    const now = Date.now();
+    // Throttle: Tối đa 1 lần mỗi 30 giây để tránh spam Supabase
+    if (now - lastAutoSaveTime > 30000) {
+      lastAutoSaveTime = now;
+      triggerAutoSave();
+    }
+  };
+
+  async function triggerAutoSave() {
+    const toast = document.getElementById('autosave-toast');
+    if (currentPlayerId && useOnlineSave) {
+        await saveGame(currentPlayerId, 0, game.currentIndex, game.mcName);
+        console.log("💾 Auto-saved to cloud slot 0");
+    }
+    // Hiện toast thông báo
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  // --- Gallery Logic ---
+  const galleryOverlay = document.getElementById('gallery-overlay');
+  const galleryGrid = document.getElementById('gallery-grid');
+  let globalData = { unlocked_cgs: [] };
+
+  // Danh sách các bộ ảnh đặc biệt (Bạn có thể thêm bớt ở đây)
+  const CG_GALLERY = [
+    { id: 'opening_gate', title: 'Cổng Trường TDTU', url: 'tdtu_gate.png' },
+    { id: 'hao_nhien_surprised', title: 'Hạo Nhiên Ngạc Nhiên', url: 'hao_nhien_surprised.png' },
+    { id: 'demo_end', title: 'Hoàn Thành Demo', url: 'poster.png' }
+  ];
+
+  async function syncGlobalData() {
+    if (currentPlayerId && useOnlineSave) {
+      const data = await fetchGlobalData(currentPlayerId);
+      if (data) {
+        globalData.unlocked_cgs = data.unlocked_cgs || [];
+      }
+    }
+  }
+
+  game.onCgUnlock = (id, url) => {
+    if (!globalData.unlocked_cgs.includes(id)) {
+      globalData.unlocked_cgs.push(id);
+      if (currentPlayerId && useOnlineSave) {
+        saveGlobalData(currentPlayerId, globalData);
+      }
+    }
+  };
+
+  function openGallery() {
+    renderGallery();
+    galleryOverlay.classList.remove('hidden');
+  }
+
+  function renderGallery() {
+    galleryGrid.innerHTML = '';
+    CG_GALLERY.forEach(cg => {
+      const isUnlocked = globalData.unlocked_cgs.includes(cg.id);
+      const item = document.createElement('div');
+      item.className = 'gallery-item' + (isUnlocked ? '' : ' locked');
+      
+      const imgUrl = getAssetUrl(cg.url);
+      item.innerHTML = `
+        <img src="${imgUrl}" alt="${cg.title}">
+        <div class="gallery-label">${isUnlocked ? cg.title : '???'}</div>
+      `;
+      
+      if (isUnlocked) {
+        item.addEventListener('click', () => {
+            window.open(imgUrl, '_blank');
+        });
+      }
+      galleryGrid.appendChild(item);
+    });
+  }
 
   // ===================================================
   // MUSIC PLAYER - Scene-Driven BGM Controller
   // Hiển thị & điều khiển nhạc nền theo cốt truyện
   // Dữ liệu metadata (tên, nghệ sĩ) lấy từ bảng music trên Supabase
   // ===================================================
-  
+
   const musicToggleBtn = document.getElementById('music-toggle-btn');
   const musicPlayer = document.getElementById('music-player');
   const musicCloseBtn = document.getElementById('music-close-btn');
@@ -321,12 +446,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const musicDurationEl = document.getElementById('music-duration');
   const musicTrackTitleEl = document.getElementById('music-track-title');
   const musicTrackArtistEl = document.getElementById('music-track-artist');
-  const musicCover = document.getElementById('music-cover');
-  const musicTracklistEl = document.getElementById('music-tracklist');
+  const musicLockIcon = document.getElementById('music-lock-icon');
 
   // Bảng tra cứu metadata: key = tên file nhạc, value = {title, artist, cover_url}
   let bgmMetadata = {}; // Sẽ được nạp từ Supabase
   let isSeekingMusic = false;
+  let isManualBgmLocked = false; // Trạng thái khoá của cảnh
+
+  // Khởi tạo trạng thái: Luôn hiện ngay từ đầu (Title Screen)
+  musicPlayer.classList.remove('hidden');
+  musicToggleBtn.style.display = 'none';
 
   // Toggle Panel
   musicToggleBtn.addEventListener('click', (e) => {
@@ -425,7 +554,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     tracks.forEach((track, idx) => {
       const filename = extractFilename(track.url);
       const isActive = filename === currentFilename;
-      
+
       const item = document.createElement('div');
       item.className = 'music-track-item' + (isActive ? ' is-active' : '');
       item.dataset.filename = filename;
@@ -437,11 +566,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
         <div class="track-playing-anim"><span></span><span></span><span></span></div>
       `;
-      
+
       // Click vào bài hát trong thư viện để phát thủ công
       item.addEventListener('click', (e) => {
         e.stopPropagation();
-        
+
+        // Kiểm tra nếu đang bị khoá theo cốt truyện
+        if (isManualBgmLocked) {
+          console.log("Không thể đổi nhạc: Cảnh này yêu cầu nhạc cố định.");
+          return;
+        }
+
         // Lấy URL bài hát
         let trackUrl = track.url;
         if (trackUrl && !trackUrl.startsWith('http')) {
@@ -451,11 +586,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Yêu cầu Engine phát bài này
         game.bgmAudio.src = trackUrl;
         game.bgmAudio.play().catch(err => console.warn("Lỗi phát nhạc thủ công:", err));
-        
+
         // Cập nhật UI
         updateNowPlaying(trackUrl);
       });
-      
+
       musicTracklistEl.appendChild(item);
     });
   }
@@ -466,11 +601,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   musicPlayBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     const audio = game.bgmAudio;
-    
+
     if (!audio.src || audio.src === '') return;
 
     if (audio.paused) {
-      audio.play().catch(() => {});
+      audio.play().catch(() => { });
       musicPlayBtn.textContent = '⏸';
       musicPlayer.classList.add('is-playing');
     } else {
@@ -513,6 +648,52 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Đăng ký callback: khi engine đổi BGM → cập nhật Music Player UI
   game.onBgmChange = (bgmUrl) => {
     updateNowPlaying(bgmUrl);
+  };
+
+  // Lắng nghe sự kiện Khoá nhạc từ Engine
+  game.onBgmLockChange = (isLocked) => {
+    isManualBgmLocked = isLocked;
+
+    if (isLocked) {
+      musicTracklistEl.classList.add('locked');
+      musicLockIcon.style.display = 'inline-block';
+    } else {
+      musicTracklistEl.classList.remove('locked');
+      musicLockIcon.style.display = 'none';
+    }
+  };
+
+  // --- Playlist Loop Mode ---
+  const musicLoopAllBtn = document.getElementById('music-loop-all');
+  
+  musicLoopAllBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      game.isPlaylistMode = !game.isPlaylistMode;
+      musicLoopAllBtn.classList.toggle('active', game.isPlaylistMode);
+      
+      // Nếu tắt playlist, set nhạc hiện tại lặp lại
+      game.bgmAudio.loop = !game.isPlaylistMode;
+  });
+
+  game.onPlaylistNext = () => {
+    if (allTracks.length === 0) return;
+    
+    // Tìm bài hiện tại trong list
+    const currentUrl = game.bgmAudio.src;
+    const currentFilename = extractFilename(currentUrl);
+    let nextIdx = allTracks.findIndex(t => extractFilename(t.url) === currentFilename) + 1;
+    
+    if (nextIdx >= allTracks.length) nextIdx = 0;
+    
+    const nextTrack = allTracks[nextIdx];
+    let trackUrl = nextTrack.url;
+    if (trackUrl && !trackUrl.startsWith('http')) {
+      trackUrl = getAssetUrl(trackUrl);
+    }
+    
+    game.bgmAudio.src = trackUrl;
+    game.bgmAudio.play().catch(() => {});
+    updateNowPlaying(trackUrl);
   };
 
   // --- Fetch BGM metadata từ Supabase ---

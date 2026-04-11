@@ -91,6 +91,10 @@ export async function fetchScript() {
 
       if (row.next_id) line.next = row.next_id;
 
+      // Map additional state features
+      if (row.bgm_lock !== undefined) line.bgm_lock = row.bgm_lock;
+      if (row.cg_id !== undefined)   line.cg_id = row.cg_id;
+
       return line;
     });
 
@@ -131,8 +135,9 @@ export async function fetchMusic() {
 
 /**
  * Lưu game (Save) lên Supabase
+ * slot 0 được quy ước là Auto-save
  */
-export async function saveGame(playerId, slot, scriptIndex) {
+export async function saveGame(playerId, slot, scriptIndex, mcName = null, saveData = {}) {
   if (!supabaseClient) {
     console.warn('Supabase chưa kết nối, lưu vào LocalStorage');
     return false;
@@ -145,6 +150,8 @@ export async function saveGame(playerId, slot, scriptIndex) {
         player_id: playerId,
         slot: slot,
         script_index: scriptIndex,
+        mc_name: mcName,
+        save_data: saveData,
         saved_at: new Date().toISOString()
       }, {
         onConflict: 'player_id,slot'
@@ -180,6 +187,51 @@ export async function loadGame(playerId, slot) {
   } catch (err) {
     console.error('❌ Lỗi load game:', err);
     return null;
+  }
+}
+
+/**
+ * Láy dữ liệu toàn cục (Gallery, Unlocks) từ Supabase
+ */
+export async function fetchGlobalData(playerId) {
+  if (!supabaseClient || !playerId) return null;
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('global_player_data')
+      .select('*')
+      .eq('player_id', playerId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return data || null;
+  } catch (err) {
+    console.error('❌ Lỗi fetch global data:', err);
+    return null;
+  }
+}
+
+/**
+ * Lưu dữ liệu toàn cục lên Supabase
+ */
+export async function saveGlobalData(playerId, globalData) {
+  if (!supabaseClient || !playerId) return false;
+
+  try {
+    const { error } = await supabaseClient
+      .from('global_player_data')
+      .upsert({
+        player_id: playerId,
+        unlocked_cgs: globalData.unlocked_cgs || [],
+        achievements: globalData.achievements || [],
+        updated_at: new Date().toISOString()
+      });
+
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.error('❌ Lỗi save global data:', err);
+    return false;
   }
 }
 
