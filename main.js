@@ -1,6 +1,7 @@
 import { VNEngine } from './engine.js';
 import { storyScript as localScript } from './gameData.js';
 import { initSupabase, fetchScript, fetchMusic, saveGame, loadGame, getAllSaves, fetchGlobalData, saveGlobalData, getAssetUrl } from './supabase.js';
+import { RhythmGame } from './rhythm.js';
 
 // Trạng thái Player
 let currentPlayerId = null;
@@ -165,6 +166,44 @@ document.addEventListener('DOMContentLoaded', async () => {
       openGallery();
     });
   });
+
+  // --- Khởi tạo Rhythm Game (Test Mode) ---
+  const rhythmGame = new RhythmGame('rhythm-overlay', 'rhythm-canvas');
+  const testRhythmBtn = document.createElement('button');
+  testRhythmBtn.className = 'menu-btn';
+  testRhythmBtn.style.background = 'linear-gradient(90deg, #9333ea, #ec4899)';
+  testRhythmBtn.textContent = '🎶 Test Nhịp Điệu (MỚI)';
+  testRhythmBtn.onclick = () => {
+    game.playClick();
+    rhythmGame.setVolume(game.bgmVolume, game.sfxVolume);
+    
+    // Tạo Mock Beatmap: 0-3 là CPU, 4-7 là Player
+    // Thể hiện luân phiên lượt hát để biểu diễn Camera Zoom
+    const mockBeatmap = {
+      speed: 650, // px/s (Sẽ bị ghi đè bởi Difficulty Mod)
+      notes: [
+        // Lượt của CPU (Lanes 0-3)
+        { time: 1.0, lane: 0 }, { time: 1.5, lane: 1 }, { time: 2.0, lane: 2 }, { time: 2.5, lane: 3 },
+        
+        // Lượt của Player (Lanes 4-7)
+        { time: 3.5, lane: 4 }, { time: 3.75, lane: 5 }, { time: 4.0, lane: 6 }, { time: 4.5, lane: 7 },
+        
+        // Lượt CPU bấm đôi
+        { time: 5.5, lane: 0 }, { time: 5.5, lane: 3 }, // Nhấn 2 phím cùng lúc
+        { time: 6.0, lane: 1 }, { time: 6.0, lane: 2 },
+        
+        // Lượt Player trả miếng 
+        { time: 7.0, lane: 4 }, { time: 7.5, lane: 5 }, { time: 8.0, lane: 6 }, { time: 8.5, lane: 7 }
+      ]
+    };
+    
+    // Gọi game, truyền tạm background âm thanh của logo studio, sặc sfx thì bỏ null tạm 
+    rhythmGame.start(mockBeatmap, 'studio_intro.mp3', null, (result) => {
+      // Khi kết thúc sẽ trả callback về đây
+      alert(result.victory ? `Win! Bạn đạt được: ${result.score} Điểm` : `Game Over! Điểm dừng lại ở: ${result.score}`);
+    });
+  };
+  document.querySelector('.menu-buttons').appendChild(testRhythmBtn);
 
   // --- Quick Menu Màn Hình Game ---
   document.getElementById('qm-save').addEventListener('click', (e) => { e.stopPropagation(); game.playClick(); openSaveLoadMenu('save'); });
