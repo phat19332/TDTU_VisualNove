@@ -10,6 +10,9 @@ export class VNEngine {
     this.typewriterTimer = null;
     this.isTyping = false;
     
+    // States for Navigation Guard
+    this.isDirty = false;
+    
     // Settings
     this.textSpeed = 25; 
     this.bgmVolume = 1.0;
@@ -68,6 +71,7 @@ export class VNEngine {
   start() {
     this.currentIndex = 0;
     this.logHistory = [];
+    this.isDirty = false;
     this.ui.charSprite.style.opacity = '0'; // Xóa sprite cũ nếu nạp lại trang
     this.ui.charSprite.src = '';
     this.ui.titleScreen.classList.remove('active');
@@ -101,6 +105,8 @@ export class VNEngine {
     const currentLine = this.script[this.currentIndex];
     if (currentLine.choices) return; // Wait for choices
 
+    this.isDirty = true; // Mark progressing
+
     if (currentLine.next) {
       if (currentLine.next === "title_screen") {
         this.exitToTitle();
@@ -124,6 +130,8 @@ export class VNEngine {
     this.syncModeUI();
     this.ui.gameScreen.classList.remove('active');
     this.ui.titleScreen.classList.add('active');
+    // Báo sự kiện ra màn hình ngoài (nếu có modal sẽ nằm bên main.js)
+    if(this.onExitScreen) this.onExitScreen();
   }
 
   renderLine(line) {
@@ -425,13 +433,17 @@ export class VNEngine {
       this.bgmAudio.volume = this.bgmVolume;
     }
     
+    // Ngăn chặn gọi play liên tục trong cùng 1 frame
+    if (!this.bgmAudio.paused) return; 
+
     const playPromise = this.bgmAudio.play();
     if (playPromise !== undefined) {
         playPromise.catch(e => {
             console.warn("Nhạc nền đang chờ tương tác người dùng để phát...");
             // Lắng nghe click đầu tiên để phát nhạc nếu bị chặn
             const playOnInteraction = () => {
-                this.bgmAudio.play().catch(() => {});
+                // Kiểm tra lại paused để chống overlapping
+                if(this.bgmAudio.paused) this.bgmAudio.play().catch(() => {});
                 document.removeEventListener('click', playOnInteraction);
                 document.removeEventListener('keydown', playOnInteraction);
             };

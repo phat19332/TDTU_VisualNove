@@ -108,6 +108,61 @@ document.addEventListener('DOMContentLoaded', async () => {
   const logOverlay = document.getElementById('log-overlay');
   const settingsOverlay = document.getElementById('settings-overlay');
   const playerIdOverlay = document.getElementById('player-id-overlay');
+  
+  // Navigation Guard / Exit Protection
+  const exitGuardModal = document.getElementById('exit-guard-modal');
+  const btnGlobalQuit = document.getElementById('btn-global-quit');
+  let currentExitCallback = null;
+
+  function promptExitCheck(callback) {
+      // Bỏ điều kiện isDirty đi để người chơi nào cũng thấy Bảng Cảnh Báo như một nút Xác Nhận Thoát (Confirmation Dialog)
+      currentExitCallback = callback;
+      exitGuardModal.classList.remove('hidden');
+  }
+
+  document.getElementById('btn-guard-save').addEventListener('click', async () => {
+      game.playClick();
+      await triggerAutoSave();
+      game.isDirty = false;
+      exitGuardModal.classList.add('hidden');
+      if (currentExitCallback) currentExitCallback();
+  });
+
+  document.getElementById('btn-guard-quit').addEventListener('click', () => {
+      game.playClick();
+      game.isDirty = false;
+      exitGuardModal.classList.add('hidden');
+      if (currentExitCallback) currentExitCallback();
+  });
+
+  document.getElementById('btn-guard-cancel').addEventListener('click', () => {
+      game.playClick();
+      exitGuardModal.classList.add('hidden');
+      currentExitCallback = null;
+  });
+
+  if (btnGlobalQuit) {
+      btnGlobalQuit.addEventListener('click', () => {
+          settingsOverlay.classList.add('hidden');
+          promptExitCheck(() => {
+              // Hủy Rhythm Game nếu nó đang vô tình chạy
+              if (window.rhythmGameRef && window.rhythmGameRef.isPlaying) {
+                  window.rhythmGameRef.stop(false, true); // true = silent/no alert
+              }
+              game.exitToTitle();
+          });
+      });
+  }
+
+  // Hook ẩn/hiện nút Quit Toàn Cục khi ở Visual Novel
+  game.onExitScreen = () => {
+      if(btnGlobalQuit) btnGlobalQuit.style.display = 'none';
+  };
+  const originalGameStart = game.start.bind(game);
+  game.start = () => {
+      if(btnGlobalQuit) btnGlobalQuit.style.display = 'block'; // Sẽ thành flex item nều layout hỗ trợ
+      originalGameStart();
+  };
 
   let saveLoadMode = 'save';
 
@@ -179,29 +234,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Tạo Mock Beatmap: 0-3 là CPU, 4-7 là Player
     // Thể hiện luân phiên lượt hát để biểu diễn Camera Zoom
-    const mockBeatmap = {
-      speed: 650, // px/s (Sẽ bị ghi đè bởi Difficulty Mod)
-      notes: [
-        // Lượt của CPU (Lanes 0-3)
-        { time: 1.0, lane: 0 }, { time: 1.5, lane: 1 }, { time: 2.0, lane: 2 }, { time: 2.5, lane: 3 },
-        
-        // Lượt của Player (Lanes 4-7)
-        { time: 3.5, lane: 4 }, { time: 3.75, lane: 5 }, { time: 4.0, lane: 6 }, { time: 4.5, lane: 7 },
-        
-        // Lượt CPU bấm đôi
-        { time: 5.5, lane: 0 }, { time: 5.5, lane: 3 }, // Nhấn 2 phím cùng lúc
-        { time: 6.0, lane: 1 }, { time: 6.0, lane: 2 },
-        
-        // Lượt Player trả miếng 
-        { time: 7.0, lane: 4 }, { time: 7.5, lane: 5 }, { time: 8.0, lane: 6 }, { time: 8.5, lane: 7 }
-      ]
-    };
-    
-    // Gọi game, truyền tạm background âm thanh của logo studio, sặc sfx thì bỏ null tạm 
-    rhythmGame.start(mockBeatmap, 'studio_intro.mp3', null, (result) => {
-      // Khi kết thúc sẽ trả callback về đây
-      alert(result.victory ? `Win! Bạn đạt được: ${result.score} Điểm` : `Game Over! Điểm dừng lại ở: ${result.score}`);
-    });
+    // Fetch bản đồ 120 giây (beatmap_test.json)
+    fetch('beatmap_test.json')
+      .then(res => res.json())
+      .then(beatmapData => {
+         // Gọi game, truyền tạm background âm thanh của logo studio
+         // Bạn có thể chuẩn bị một file âm thanh ngắn (ví dụ: 'hit_sound.mp3') và truyền vào thay chỗ của 'null' bên dưới
+         window.rhythmGameRef = rhythmGame;
+         rhythmGame.start(beatmapData, 'studio_intro.mp3', null, async (result) => {
+           if(result.silent) return; // Nếu bị ngắt bởi Quit thủ công thì không hiện Alert
+           
+           // Đánh dấu game có dữ liệu mới để bảo vệ Navigation
+           game.isDirty = true;
+           
+           alert(result.victory ? `Win! Bạn đạt được: ${result.score} Điểm\nMax Combo: ${result.maxCombo}` : `Game Over! Nhóc Trùm đã đánh bại bạn.\nĐiểm: ${result.score}`);
+           
+           // Lưu Highscore vào storage (mô phỏng)
+           const currentRhythmHighscore = parseInt(localStorage.getItem('tdtu_rhythm_highscore') || '0');
+           if (result.score > currentRhythmHighscore) {
+               localStorage.setItem('tdtu_rhythm_highscore', result.score);
+               console.log("Kỷ lục mới được lưu!");
+           }
+           
+           await triggerAutoSave();
+         });
+      })
+      .catch(err => {
+         console.error("Không tìm thấy file beatmap_test.json", err);
+         alert("Lỗi tải Beatmap rùi!");
+      });
   };
   document.querySelector('.menu-buttons').appendChild(testRhythmBtn);
 
@@ -402,9 +463,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       date: new Date().toLocaleString(),
       mcName: game.mcName
     }));
-    // Tắt hiện toast làm phiền theo yêu cầu
-    // toast.classList.add('show');
-    // setTimeout(() => toast.classList.remove('show'), 3000);
+    
+    // Gỡ cờ isDirty
+    game.isDirty = false;
   }
 
   // --- Gallery Logic ---
@@ -492,9 +553,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   let isSeekingMusic = false;
   let isManualBgmLocked = false;
 
-  // Khởi tạo: Luôn hiện ngay từ đầu (Title Screen)
-  musicPlayer.classList.remove('hidden');
-  musicToggleBtn.style.display = 'none';
+  // Khởi tạo: Ẩn trình phát nhạc mặc định, chỉ hiện nút gạt
+  musicPlayer.classList.add('hidden');
+  musicToggleBtn.style.display = 'flex';
 
   // Toggle Panel
   musicToggleBtn.addEventListener('click', (e) => {

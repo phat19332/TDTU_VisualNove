@@ -1,0 +1,85 @@
+{
+  "title": "TDTU Anime Showdown",
+  "bpm": 120,
+  "baseSpeed": 650,
+  "notes": [
+    { "time": 1.0, "lane": 4, "type": "tap" },
+    { "time": 2.0, "lane": 5, "type": "tap" },
+    { "time": 3.0, "lane": 6, "type": "tap" },
+    { "time": 4.0, "lane": 7, "type": "tap" },
+    
+    { "time": 5.0, "lane": 0, "type": "hold", "holdLength": 2.0 },
+    { "time": 6.0, "lane": 1, "type": "tap" },
+    { "time": 7.0, "lane": 2, "type": "tap" },
+    
+    { "time": 8.0, "lane": 4, "type": "hold", "holdLength": 1.5 },
+    { "time": 8.0, "lane": 7, "type": "tap" },
+    { "time": 9.5, "lane": 5, "type": "tap" },
+    
+    { "time": 10.0, "lane": 3, "type": "tap" },
+    { "time": 10.5, "lane": 2, "type": "tap" },
+    { "time": 11.0, "lane": 1, "type": "tap" },
+    { "time": 11.5, "lane": 0, "type": "tap" },
+
+    { "time": 12.0, "lane": 4, "type": "tap" },
+    { "time": 12.5, "lane": 5, "type": "tap" },
+    { "time": 13.0, "lane": 6, "type": "tap" },
+    { "time": 13.5, "lane": 7, "type": "tap" },
+    
+    { "time": 14.0, "lane": 0, "type": "hold", "holdLength": 3.0 },
+    { "time": 14.5, "lane": 4, "type": "tap" },
+    { "time": 15.0, "lane": 5, "type": "tap" },
+    { "time": 15.5, "lane": 6, "type": "hold", "holdLength": 1.0 },
+
+    { "time": 18.0, "lane": 0, "type": "tap" },
+    { "time": 18.0, "lane": 7, "type": "tap" },
+
+    { "time": 20.0, "lane": 4, "type": "tap" }, { "time": 20.5, "lane": 5, "type": "tap" },
+    { "time": 21.0, "lane": 6, "type": "tap" }, { "time": 21.5, "lane": 7, "type": "tap" },
+    { "time": 22.0, "lane": 4, "type": "tap" }, { "time": 22.25, "lane": 5, "type": "tap" }, { "time": 22.5, "lane": 6, "type": "tap" },
+    
+    { "time": 25.0, "lane": 0, "type": "tap" }, { "time": 25.5, "lane": 1, "type": "tap" },
+    { "time": 26.0, "lane": 2, "type": "tap" }, { "time": 26.5, "lane": 3, "type": "tap" },
+    { "time": 27.0, "lane": 0, "type": "hold", "holdLength": 2.0 },
+    
+    { "time": 30.0, "lane": 4, "type": "tap" }, { "time": 30.2, "lane": 5, "type": "tap" },
+    { "time": 30.4, "lane": 6, "type": "tap" }, { "time": 30.6, "lane": 7, "type": "tap" },
+    { "time": 31.0, "lane": 4, "type": "tap" }, { "time": 31.2, "lane": 5, "type": "tap" },
+
+    { "time": 33.0, "lane": 5, "type": "hold", "holdLength": 4.0 },
+    { "time": 33.0, "lane": 1, "type": "hold", "holdLength": 4.0 },
+
+    { "time": 40.0, "lane": 4, "type": "tap" },
+    { "time": 41.0, "lane": 7, "type": "tap" },
+    { "time": 42.0, "lane": 5, "type": "tap" },
+    { "time": 43.0, "lane": 6, "type": "tap" },
+
+    { "time": 50.0, "lane": 2, "type": "tap" },
+    { "time": 50.5, "lane": 6, "type": "tap" },
+    { "time": 51.0, "lane": 1, "type": "tap" },
+    { "time": 51.5, "lane": 5, "type": "tap" },
+    
+    { "time": 60.0, "lane": 7, "type": "hold", "holdLength": 5.0 },
+    { "time": 61.0, "lane": 4, "type": "tap" },
+    { "time": 62.0, "lane": 5, "type": "tap" },
+    { "time": 63.0, "lane": 6, "type": "tap" },
+    
+    { "time": 70.0, "lane": 0, "type": "tap" }, { "time": 70.1, "lane": 1, "type": "tap" }, { "time": 70.2, "lane": 2, "type": "tap" }, { "time": 70.3, "lane": 3, "type": "tap" },
+    { "time": 71.0, "lane": 4, "type": "tap" }, { "time": 71.1, "lane": 5, "type": "tap" }, { "time": 71.2, "lane": 6, "type": "tap" }, { "time": 71.3, "lane": 7, "type": "tap" },
+    
+    { "time": 75.0, "lane": 4, "type": "hold", "holdLength": 2.0 },
+    { "time": 75.0, "lane": 7, "type": "hold", "holdLength": 2.0 },
+    
+    { "time": 80.0, "lane": 5, "type": "tap" }, { "time": 80.2, "lane": 6, "type": "tap" },
+    { "time": 80.4, "lane": 5, "type": "tap" }, { "time": 80.6, "lane": 6, "type": "tap" },
+    
+    { "time": 90.0, "lane": 0, "type": "hold", "holdLength": 3.0 },
+    { "time": 90.0, "lane": 4, "type": "hold", "holdLength": 3.0 },
+    
+    { "time": 100.0, "lane": 4, "type": "tap" }, { "time": 100.5, "lane": 5, "type": "tap" }, { "time": 101.0, "lane": 6, "type": "tap" },
+    { "time": 105.0, "lane": 7, "type": "hold", "holdLength": 5.0 },
+    
+    { "time": 115.0, "lane": 5, "type": "tap" },
+    { "time": 116.0, "lane": 7, "type": "tap" }
+  ]
+}
