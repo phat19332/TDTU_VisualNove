@@ -115,8 +115,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentExitCallback = null;
 
   function promptExitCheck(callback) {
-      // Bỏ điều kiện isDirty đi để người chơi nào cũng thấy Bảng Cảnh Báo như một nút Xác Nhận Thoát (Confirmation Dialog)
+      const guardText = document.getElementById('exit-guard-text');
+      const btnSave = document.getElementById('btn-guard-save');
+      
       currentExitCallback = callback;
+      
+      if (game.isDirty) {
+          // Trường hợp: Có tiến trình mới chưa lưu
+          if (guardText) guardText.textContent = "Hành trình này rất quan trọng, bạn chắc chắn muốn dừng chân tại đây mà chưa lưu lại tiến trình chứ?";
+          if (btnSave) btnSave.style.display = "block";
+      } else {
+          // Trường hợp: Đã lưu hoặc chưa có tiến trình mới
+          if (guardText) guardText.textContent = "Bạn có chắc chắn muốn thoát và quay lại màn hình chính không?";
+          if (btnSave) btnSave.style.display = "none";
+      }
+      
       exitGuardModal.classList.remove('hidden');
   }
 
