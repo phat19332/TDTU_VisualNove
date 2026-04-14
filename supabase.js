@@ -75,10 +75,10 @@ export async function fetchScript() {
       }
 
       // Dual Character System (char_l ưu tiên hơn char_name)
-      if (row.char_l !== null && row.char_l !== undefined) {
+      if (row.char_l !== undefined) {
         line.char_l = (row.char_l === '' || row.char_l === 'null') ? null : row.char_l;
       }
-      if (row.char_r !== null && row.char_r !== undefined) {
+      if (row.char_r !== undefined) {
         line.char_r = (row.char_r === '' || row.char_r === 'null') ? null : row.char_r;
       }
       if (row.emotion_l)     line.emotion_l = row.emotion_l;

@@ -10,7 +10,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap"
     rel="stylesheet">
-  <!-- Supabase JS Client -->
+  <!-- Core Modules -->
+  <script type="module" src="/i18n.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
@@ -33,12 +34,12 @@
     <div id="title-screen" class="screen">
       <div class="title-bg"></div>
       <div class="title-content">
-        <h1 class="game-logo">Time, Dreams, Trials & Us</h1>
-        <p class="subtitle">Đại Học Tôn Đức Thắng - Nơi Ước Mơ Bắt Đầu</p>
+        <h1 class="game-logo" data-i18n="game-logo">Time, Dreams, Trials & Us</h1>
+        <p class="subtitle" data-i18n="title-subtitle">Đại Học Tôn Đức Thắng - Nơi Ước Mơ Bắt Đầu</p>
         <div class="menu-buttons">
-          <button id="btn-start" class="menu-btn">Bắt Đầu Mới</button>
-          <button id="btn-load" class="menu-btn">Tiếp Tục</button>
-          <button id="btn-settings" class="menu-btn">Cài Đặt</button>
+          <button id="btn-start" class="menu-btn" data-i18n="btn-start">Bắt Đầu Mới</button>
+          <button id="btn-load" class="menu-btn" data-i18n="btn-load">Tiếp Tục</button>
+          <button id="btn-settings" class="menu-btn" data-i18n="btn-settings">Cài Đặt</button>
         </div>
       </div>
     </div>
@@ -60,12 +61,13 @@
 
       <!-- Quick Menu trên Box Thoại -->
       <div class="quick-menu">
-        <button id="qm-save" class="qm-btn" title="Save">Save</button>
-        <button id="qm-load" class="qm-btn" title="Load">Load</button>
-        <button id="qm-skip" class="qm-btn" title="Skip">Skip</button>
-        <button id="qm-auto" class="qm-btn" title="Auto">Auto</button>
-        <button id="qm-log" class="qm-btn" title="Log">Log</button>
-        <button id="qm-settings" class="qm-btn" title="Settings">Cài Đặt</button>
+        <button id="qm-save" class="qm-btn" title="Save" data-i18n="qm-save">Save</button>
+        <button id="qm-load" class="qm-btn" title="Load" data-i18n="qm-load">Load</button>
+        <button id="qm-skip" class="qm-btn" title="Skip" data-i18n="qm-skip">Skip</button>
+        <button id="qm-auto" class="qm-btn" title="Auto" data-i18n="qm-auto">Auto</button>
+        <button id="qm-log" class="qm-btn" title="Log" data-i18n="qm-log">Log</button>
+        <button id="qm-settings" class="qm-btn" title="Settings" data-i18n="qm-settings">Cài Đặt</button>
+        <button id="qm-lang" class="qm-btn lang-toggle" title="Ngôn ngữ (Language)">🇻🇳 VI</button>
       </div>
 
       <!-- Hộp Thoại (Dialogue Box) -->
@@ -96,7 +98,7 @@
     <!-- Music Player Panel -->
     <div id="music-player" class="music-player">
       <div class="music-player-header">
-        <span class="music-player-title">🎶 Nhạc Nền (BGM)</span>
+        <span class="music-player-title" data-i18n="music-title">🎶 Nhạc Nền (BGM)</span>
         <button id="music-close-btn" class="music-close-btn" title="Đóng">✕</button>
       </div>
 
@@ -107,11 +109,11 @@
         </div>
         <div class="music-info">
           <div class="music-track-title-wrapper">
-            <div class="music-track-title" id="music-track-title">Chưa có nhạc</div>
+            <div class="music-track-title" id="music-track-title" data-i18n="music-not-playing">Chưa có nhạc</div>
             <span id="music-lock-icon" class="music-lock-icon" title="Nhạc đã được khoá theo cốt truyện"
               style="display: none;">🔒</span>
           </div>
-          <div class="music-track-artist" id="music-track-artist">Chờ cốt truyện...</div>
+          <div class="music-track-artist" id="music-track-artist" data-i18n="music-wait">Chờ cốt truyện...</div>
         </div>
       </div>
 
@@ -135,9 +137,9 @@
       </div>
 
       <!-- BGM Library -->
-      <div class="music-tracklist-header">Thư Viện BGM</div>
+      <div class="music-tracklist-header" data-i18n="music-tracklist">Thư Viện BGM</div>
       <div class="music-tracklist" id="music-tracklist">
-        <div class="music-tracklist-empty">Đang tải...</div>
+        <div class="music-tracklist-empty" data-i18n="music-empty">Đang tải...</div>
       </div>
     </div>
 
@@ -148,30 +150,30 @@
         <div class="slots-container" id="slots-container">
           <!-- slots render qua JS -->
         </div>
-        <button id="btn-close-saveload" class="modal-close-btn">Đóng</button>
+        <button id="btn-close-saveload" class="modal-close-btn" data-i18n="btn-close-global">Đóng</button>
       </div>
     </div>
 
     <!-- Overlay: Log Hội Thoại -->
     <div id="log-overlay" class="modal-overlay hidden">
       <div class="modal-content log-content">
-        <h2 class="modal-title">Lịch Sử Trò Chuyện</h2>
+        <h2 class="modal-title" data-i18n="log-title">Lịch Sử Trò Chuyện</h2>
         <div id="log-scroll-area" class="log-scroll-area">
           <!-- Các đoạn log sẽ xuất hiện ở đây -->
         </div>
-        <button id="btn-close-log" class="modal-close-btn">Đóng</button>
+        <button id="btn-close-log" class="modal-close-btn" data-i18n="btn-close-global">Đóng</button>
       </div>
     </div>
 
     <!-- Overlay: Nhập Player ID -->
     <div id="player-id-overlay" class="modal-overlay hidden">
       <div class="modal-content player-id-content">
-        <h2 class="modal-title">Nhập Tên / ID Người Chơi</h2>
-        <p style="text-align:center;color:#666;font-size:0.95rem;">Dùng để lưu tiến trình game trên máy chủ.<br>Bạn có thể nhập bất kỳ tên gì!</p>
+        <h2 class="modal-title" data-i18n="player-id-title">Nhập Tên / ID Người Chơi</h2>
+        <p style="text-align:center;color:#666;font-size:0.95rem;" data-i18n="player-id-desc">Dùng để lưu tiến trình game trên máy chủ.<br>Bạn có thể nhập bất kỳ tên gì!</p>
         <input type="text" id="player-id-input" class="player-id-input" placeholder="VD: HaoNhien2026" maxlength="30">
-        <button id="btn-confirm-player" class="modal-close-btn" style="background:var(--tdt-blue);">Xác Nhận & Chơi</button>
+        <button id="btn-confirm-player" class="modal-close-btn" style="background:var(--tdt-blue);" data-i18n="player-id-confirm">Xác Nhận & Chơi</button>
         <button id="btn-skip-player" class="modal-close-btn"
-          style="background:#999;margin-top:5px;font-size:0.9rem;padding:8px 30px;">Chơi Ẩn Danh (Không Lưu
+          style="background:#999;margin-top:5px;font-size:0.9rem;padding:8px 30px;" data-i18n="player-id-skip">Chơi Ẩn Danh (Không Lưu
           Online)</button>
       </div>
     </div>
@@ -179,23 +181,32 @@
     <!-- Overlay: Settings -->
     <div id="settings-overlay" class="modal-overlay hidden">
       <div class="modal-content">
-        <h2 class="modal-title">Cài Đặt</h2>
+        <h2 class="modal-title" data-i18n="settings-title">Cài Đặt</h2>
+        
         <div class="settings-group">
-          <label for="bgm-volume">Âm Lượng Nhạc Nền (BGM): <span id="bgm-val">100</span>%</label>
+          <label for="game-language"><span data-i18n="settings-lang">Ngôn Ngữ (Language): </span></label>
+          <select id="game-language" class="settings-select">
+            <option value="vi">Tiếng Việt (VI)</option>
+            <option value="en">English (EN)</option>
+          </select>
+        </div>
+
+        <div class="settings-group">
+          <label for="bgm-volume"><span data-i18n="settings-bgm">Âm Lượng Nhạc Nền (BGM): </span><span id="bgm-val">100</span>%</label>
           <input type="range" id="bgm-volume" min="0" max="100" value="100">
         </div>
         <div class="settings-group">
-          <label for="sfx-volume">Âm Lượng Hiệu Ứng (SFX): <span id="sfx-val">100</span>%</label>
+          <label for="sfx-volume"><span data-i18n="settings-sfx">Âm Lượng Hiệu Ứng (SFX): </span><span id="sfx-val">100</span>%</label>
           <input type="range" id="sfx-volume" min="0" max="100" value="100">
         </div>
         <div class="settings-group">
-          <label for="text-speed">Tốc Độ Chữ: <span id="speed-val">Bình thường</span></label>
+          <label for="text-speed"><span data-i18n="settings-speed">Tốc Độ Chữ: </span><span id="speed-val">Bình thường</span></label>
           <input type="range" id="text-speed" min="10" max="100" value="25" step="5" dir="rtl">
         </div>
         
         <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button id="btn-global-quit" class="modal-close-btn" style="display: none; background: #64748b; flex: 1;">⬅ Thoát Game</button>
-            <button id="btn-close-settings" class="modal-close-btn" style="flex: 2;">Thoát Cài Đặt</button>
+            <button id="btn-global-quit" class="modal-close-btn" style="display: none; background: #64748b; flex: 1;" data-i18n="btn-global-quit">⬅ Thoát Game</button>
+            <button id="btn-close-settings" class="modal-close-btn" style="flex: 2;" data-i18n="btn-close-settings">Thoát Cài Đặt</button>
         </div>
       </div>
     </div>
@@ -217,11 +228,11 @@
     <!-- Overlay: Thư Viện Ảnh (Gallery) -->
     <div id="gallery-overlay" class="modal-overlay hidden">
       <div class="modal-content gallery-content">
-        <h2 class="modal-title">🖼️ Gallery - Kỷ Niệm TDTU</h2>
+        <h2 class="modal-title" data-i18n="gallery-title">🖼️ Gallery - Kỷ Niệm TDTU</h2>
         <div id="gallery-grid" class="gallery-grid">
            <!-- Ảnh sẽ được load qua JS -->
         </div>
-        <button id="btn-close-gallery" class="modal-close-btn">Quay Lại</button>
+        <button id="btn-close-gallery" class="modal-close-btn" data-i18n="btn-close-global">Quay Lại</button>
       </div>
     </div>
 
@@ -236,17 +247,17 @@
       
       <!-- Menu Chọn Độ Khó -->
       <div id="rhythm-difficulty-menu" style="position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.9); z-index: 100;">
-        <h1 style="color: #fff; text-shadow: 0 0 15px #c084fc; font-family: var(--font-title); margin-bottom: 30px; font-size: 3rem;">CHỌN ĐỘ KHÓ</h1>
+        <h1 style="color: #fff; text-shadow: 0 0 15px #c084fc; font-family: var(--font-title); margin-bottom: 30px; font-size: 3rem;" data-i18n="rhythm-diff-title">CHỌN ĐỘ KHÓ</h1>
         <div style="display: flex; gap: 20px;">
-          <button class="diff-btn" data-level="1" style="background: #4ade80; color: #064e3b;">Em Bé 👶</button>
-          <button class="diff-btn" data-level="2" style="background: #38bdf8; color: #0c4a6e;">Học Sinh 🎒</button>
-          <button class="diff-btn" data-level="3" style="background: #f1f5f9; color: #0f172a;">Người Lớn 👔</button>
-          <button class="diff-btn" data-level="4" style="background: #ef4444; color: #450a0a;">Nhóc Trùm 💀</button>
+          <button class="diff-btn" data-level="1" data-i18n="rhythm-diff-1" style="background: #4ade80; color: #064e3b;">Em Bé 👶</button>
+          <button class="diff-btn" data-level="2" data-i18n="rhythm-diff-2" style="background: #38bdf8; color: #0c4a6e;">Học Sinh 🎒</button>
+          <button class="diff-btn" data-level="3" data-i18n="rhythm-diff-3" style="background: #f1f5f9; color: #0f172a;">Người Lớn 👔</button>
+          <button class="diff-btn" data-level="4" data-i18n="rhythm-diff-4" style="background: #ef4444; color: #450a0a;">Nhóc Trùm 💀</button>
         </div>
       </div>
 
       <!-- Loading Screen -->
-      <div id="rhythm-loader" class="hidden" style="color: white; font-size: 1.5rem; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 50;">
+      <div id="rhythm-loader" class="hidden" style="color: white; font-size: 1.5rem; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 50;" data-i18n="rhythm-loading">
         Bắt đầu load assets...
       </div>
       
@@ -282,13 +293,13 @@
     <!-- Navigation Guard Modal (Save/Exit) -->
     <div id="exit-guard-modal" class="modal-overlay hidden" style="z-index: 10000; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(12px);">
       <div class="glass-panel" style="width: 500px; padding: 40px; text-align: center; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 20px;">
-        <h2 style="color: var(--tdt-gold); font-family: var(--font-title); font-size: 2.5rem; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(251, 191, 36, 0.4);">Khoan Đã!</h2>
+        <h2 style="color: var(--tdt-gold); font-family: var(--font-title); font-size: 2.5rem; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(251, 191, 36, 0.4);" data-i18n="guard-title">Khoan Đã!</h2>
         <p id="exit-guard-text" style="color: #fff; font-size: 1.2rem; line-height: 1.5; margin-bottom: 20px;">Hành trình này rất quan trọng, bạn chắc chắn muốn dừng chân tại đây mà chưa lưu lại tiến trình chứ?</p>
         
         <div style="display: flex; flex-direction: column; gap: 15px;">
-          <button id="btn-guard-save" class="diff-btn" style="background: #4ade80; color: #064e3b; box-shadow: 0 4px 15px rgba(74, 222, 128, 0.4);">Lưu Lại &amp; Thoát</button>
-          <button id="btn-guard-quit" class="diff-btn" style="background: #ef4444; color: #450a0a; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);">Vẫn Thoát (Không Lưu)</button>
-          <button id="btn-guard-cancel" class="diff-btn" style="background: #475569; color: #f8fafc; font-size: 1.2rem;">Hủy Bỏ (Quay Lại Màn Chơi)</button>
+          <button id="btn-guard-save" class="diff-btn" style="background: #4ade80; color: #064e3b; box-shadow: 0 4px 15px rgba(74, 222, 128, 0.4);" data-i18n="guard-save">Lưu Lại &amp; Thoát</button>
+          <button id="btn-guard-quit" class="diff-btn" style="background: #ef4444; color: #450a0a; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);" data-i18n="guard-quit">Vẫn Thoát (Không Lưu)</button>
+          <button id="btn-guard-cancel" class="diff-btn" style="background: #475569; color: #f8fafc; font-size: 1.2rem;" data-i18n="guard-cancel">Hủy Bỏ (Quay Lại Màn Chơi)</button>
         </div>
       </div>
     </div>
@@ -297,7 +308,7 @@
 
   <!-- Thông báo Auto-save -->
   <div id="autosave-toast" class="autosave-toast">
-    <span>💾 Đã tự động lưu...</span>
+    <span data-i18n="autosave-toast">💾 Đã tự động lưu...</span>
   </div>
 
   <script type="module" src="/main.js"></script>

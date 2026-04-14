@@ -2,6 +2,7 @@ import { VNEngine } from './engine.js';
 import { storyScript as localScript } from './gameData.js';
 import { initSupabase, fetchScript, fetchMusic, saveGame, loadGame, getAllSaves, fetchGlobalData, saveGlobalData, getAssetUrl } from './supabase.js';
 import { RhythmGame } from './rhythm.js';
+import { I18N_DICT } from './i18n.js';
 
 // Trạng thái Player
 let currentPlayerId = null;
@@ -17,12 +18,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   const playStudioSound = () => {
     const introSound = new Audio(getAssetUrl('studio_intro.mp3'));
     introSound.volume = 0.6;
+    let hasPlayed = false;
+
+    const cleanup = () => {
+      document.removeEventListener('click', attemptPlay);
+      document.removeEventListener('keydown', attemptPlay);
+    };
 
     const attemptPlay = () => {
+      if (hasPlayed) return;
       introSound.play()
         .then(() => {
-          document.removeEventListener('click', attemptPlay);
-          document.removeEventListener('keydown', attemptPlay);
+          hasPlayed = true;
+          cleanup();
         })
         .catch(e => console.log("Chờ tương tác để phát nhạc logo..."));
     };
@@ -30,6 +38,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.addEventListener('click', attemptPlay);
     document.addEventListener('keydown', attemptPlay);
     attemptPlay();
+
+    // Dọn dẹp listeners sau 6 giây dù có phát được hay không
+    setTimeout(cleanup, 6000);
   };
 
   playStudioSound();
@@ -45,6 +56,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (posterDiv) {
     posterDiv.style.backgroundImage = `url('${getAssetUrl('poster.png')}')`;
   }
+
+  // Khôi phục i18n
+  const initialLang = localStorage.getItem('tdtu_lang') || 'vi';
+  
+  function applyI18n(lang) {
+    const elements = document.querySelectorAll('[data-i18n]');
+    elements.forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (I18N_DICT[lang] && I18N_DICT[lang][key]) {
+        if (el.tagName === 'INPUT' && el.type === 'button') {
+            el.value = I18N_DICT[lang][key];
+        } else {
+            el.innerHTML = I18N_DICT[lang][key];
+        }
+      }
+    });
+    
+    // Đặc tả Update Label Speed
+    const elSpeed = document.getElementById('text-speed');
+    if (elSpeed && parseInt(elSpeed.value) === 25) {
+       document.getElementById('speed-val').innerText = I18N_DICT[lang]['speed-normal'] || 'Bình thường';
+    }
+  }
+  
+  applyI18n(initialLang);
 
   // --- Khởi tạo Supabase ---
   const supabaseReady = initSupabase();
@@ -102,6 +138,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- Khởi tạo Engine ---
   const game = new VNEngine(gameScript, ui);
+  
+  // Hook i18n
+  game.onLanguageChange = (lang) => {
+      applyI18n(lang);
+  };
 
   // --- Modals Elements ---
   const slOverlay = document.getElementById('saveload-overlay');
@@ -292,8 +333,43 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('qm-settings').addEventListener('click', (e) => {
     e.stopPropagation();
     game.playClick();
+    
+    // Đồng bộ menu Dropdown trước khi hiện
+    const langSelect = document.getElementById('game-language');
+    if (langSelect) {
+        langSelect.value = localStorage.getItem('tdtu_lang') || 'vi';
+    }
+    
     settingsOverlay.classList.remove('hidden');
   });
+
+  const langSelectModal = document.getElementById('game-language');
+  if (langSelectModal) {
+      langSelectModal.addEventListener('change', (e) => {
+          game.playClick();
+          const newLang = e.target.value;
+          game.setLanguage(newLang);
+          
+          if (langBtn) {
+             langBtn.textContent = newLang === 'vi' ? '🇻🇳 VI' : '🇬🇧 EN';
+          }
+      });
+  }
+
+  const langBtn = document.getElementById('qm-lang');
+  if (langBtn) {
+    // Khôi phục text ban đầu dựa trên state
+    const currentLang = localStorage.getItem('tdtu_lang') || 'vi';
+    langBtn.textContent = currentLang === 'vi' ? '🇻🇳 VI' : '🇬🇧 EN';
+
+    langBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      game.playClick();
+      const newLang = game.currentLang === 'vi' ? 'en' : 'vi';
+      game.setLanguage(newLang);
+      langBtn.textContent = newLang === 'vi' ? '🇻🇳 VI' : '🇬🇧 EN';
+    });
+  }
 
   // --- Logic Modal Lưu/Tải ---
   function openSaveLoadMenu(mode) {
@@ -387,15 +463,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const arr = game.getLog();
     const area = document.getElementById('log-scroll-area');
     area.innerHTML = '';
+    
+    const currLang = localStorage.getItem('tdtu_lang') || 'vi';
 
     if (arr.length === 0) {
-      area.innerHTML = '<i>Chưa có cuộc trò chuyện nào...</i>';
+      const emptyText = (I18N_DICT[currLang] && I18N_DICT[currLang]['log-empty']) ? I18N_DICT[currLang]['log-empty'] : 'Chưa có cuộc trò chuyện nào...';
+      area.innerHTML = `<i>${emptyText}</i>`;
     } else {
       arr.forEach(item => {
         const div = document.createElement('div');
         div.className = 'log-item';
-        div.innerHTML = `<div class="log-speaker">${item.speaker || "Dẫn truyện"}</div>
-                         <div class="log-text">${item.text}</div>`;
+        const speakerText = item.speaker ? item.speaker : ((I18N_DICT[currLang] && I18N_DICT[currLang]['narrator']) ? I18N_DICT[currLang]['narrator'] : 'Dẫn truyện');
+        const contentText = currLang === 'vi' ? item.textVi : item.textEn;
+        div.innerHTML = `<div class="log-speaker">${speakerText}</div>
+                         <div class="log-text">${contentText}</div>`;
         area.appendChild(div);
       });
     }
@@ -419,8 +500,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   elSpeed.addEventListener('input', (e) => {
-    document.getElementById('speed-val').innerText = e.target.value + "ms";
-    game.textSpeed = parseInt(e.target.value);
+      let rawVal = parseInt(e.target.value);
+      if (rawVal === 25) {
+        const currLang = localStorage.getItem('tdtu_lang') || 'vi';
+        const normalText = (I18N_DICT[currLang] && I18N_DICT[currLang]['speed-normal']) ? I18N_DICT[currLang]['speed-normal'] : 'Bình thường';
+        document.getElementById('speed-val').innerText = normalText;
+      } else {
+        document.getElementById('speed-val').innerText = rawVal + "ms";
+      }
+      game.textSpeed = rawVal;
   });
 
   // --- Đóng Modals ---

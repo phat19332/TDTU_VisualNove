@@ -10,6 +10,9 @@ export class VNEngine {
     this.typewriterTimer = null;
     this.isTyping = false;
     
+    // Logic Ngôn Ngữ (i18n)
+    this.currentLang = localStorage.getItem('tdtu_lang') || 'vi';
+
     // States for Navigation Guard
     this.isDirty = false;
     
@@ -60,6 +63,19 @@ export class VNEngine {
       this.playClick();
       this.next();
     });
+  }
+
+  setLanguage(lang) {
+    this.currentLang = lang;
+    localStorage.setItem('tdtu_lang', lang);
+    // Render lại line hiện tại để cập nhật ngôn ngữ ngay lập tức
+    if (this.script && this.script[this.currentIndex]) {
+      this.renderLine(this.script[this.currentIndex]);
+    }
+    // Thông báo ra ngoài để cập nhật UI tĩnh (i18n)
+    if (this.onLanguageChange) {
+      this.onLanguageChange(lang);
+    }
   }
 
   playClick() {
@@ -124,7 +140,6 @@ export class VNEngine {
   }
 
   exitToTitle() {
-    this.bgmAudio.pause();
     this.isAutoMode = false;
     this.isSkipMode = false;
     this.syncModeUI();
@@ -138,7 +153,12 @@ export class VNEngine {
     if (!line) return;
 
     // 1. Xử lý Thay thế Biến (MC Name)
-    let processedDialogue = line.dialogue || "";
+    let processedDialogue = "";
+    if (typeof line.dialogue === 'object' && line.dialogue !== null) {
+      processedDialogue = line.dialogue[this.currentLang] || line.dialogue['vi'] || "";
+    } else {
+      processedDialogue = line.dialogue || line.text || "";
+    }
     processedDialogue = processedDialogue.replace(/\{Name\}/g, this.mcName);
     processedDialogue = processedDialogue.replace(/\{name\}/g, this.mcName);
 
@@ -209,7 +229,7 @@ export class VNEngine {
 
         if (charId === undefined) return; // Không có yêu cầu đổi thì giữ nguyên
 
-        if (charId === null || charId === 'null') {
+        if (charId === null || charId === "" || charId === 'null') {
             slotImg.style.opacity = '0';
             this.slotState[side] = { name: null, id: null };
             return;
@@ -309,10 +329,13 @@ export class VNEngine {
     }
     
     // 8. Lưu Log
-    this.logHistory.push({
-      speaker: line.speaker || "Dẫn chuyện",
-      text: processedDialogue
-    });
+    if (this.logHistory.length < this.currentIndex + 1) {
+      this.logHistory.push({
+        speaker: line.speaker || null,
+        textVi: (typeof line.dialogue === 'object' && line.dialogue) ? (line.dialogue['vi'] || line.text || "") : (line.dialogue || line.text || ""),
+        textEn: (typeof line.dialogue === 'object' && line.dialogue) ? (line.dialogue['en'] || line.dialogue['vi'] || line.text || "") : (line.dialogue || line.text || "")
+      });
+    }
 
     // 9. Auto Save Trigger
     if (this.onAutoSave && !line.choices) {
@@ -343,7 +366,12 @@ export class VNEngine {
   completeTyping(choices = null) {
     clearInterval(this.typewriterTimer);
     const line = this.script[this.currentIndex];
-    let text = line.dialogue || line.text || "";
+    let text = "";
+    if (typeof line.dialogue === 'object' && line.dialogue !== null) {
+      text = line.dialogue[this.currentLang] || line.dialogue['vi'] || "";
+    } else {
+      text = line.dialogue || line.text || "";
+    }
     text = text.replace(/\{Name\}/g, this.mcName);
     text = text.replace(/\{name\}/g, this.mcName);
     this.ui.dialogueText.textContent = text;
@@ -431,6 +459,8 @@ export class VNEngine {
     if (this.bgmAudio.src !== absoluteBvUrl) {
       this.bgmAudio.src = absoluteBvUrl;
       this.bgmAudio.volume = this.bgmVolume;
+      this.currentBgmUrl = url;
+      if (this.onBgmChange) this.onBgmChange(url);
     }
     
     // Ngăn chặn gọi play liên tục trong cùng 1 frame

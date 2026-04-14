@@ -309,6 +309,16 @@ body {
   border-color: #249845 !important;
 }
 
+.lang-toggle {
+  background: linear-gradient(135deg, #0A4595, #E31837);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.6);
+}
+.lang-toggle:hover {
+  background: linear-gradient(135deg, #E31837, #0A4595);
+  box-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
 .dialogue-box {
   position: absolute;
   bottom: 25px;
@@ -490,6 +500,28 @@ body {
 .settings-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
 .settings-group label { font-weight: 600; color: var(--tdt-blue); font-size: 1.2rem; }
 .settings-group input[type="range"] { cursor: pointer; width: 100%; height: 8px; }
+.settings-select {
+  width: 100%;
+  padding: 10px 15px;
+  border: 2px solid var(--tdt-blue);
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-family: var(--font-ui);
+  background-color: white;
+  color: #333;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: auto;
+}
+.settings-select:focus {
+  border-color: var(--tdt-red);
+  box-shadow: 0 0 10px rgba(227,24,55,0.1);
+}
+.settings-select option {
+  color: #333;
+  background-color: white;
+}
 
 .modal-close-btn { 
   align-self: center; background: var(--tdt-red); color: white; 

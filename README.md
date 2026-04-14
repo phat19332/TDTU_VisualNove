@@ -34,8 +34,8 @@ Game hỗ trợ hiển thị **2 nhân vật cùng lúc** (Trái và Phải).
 | **bg** | Ảnh nền | Điền tên file ảnh trong Storage (ví dụ: `tdtu_gate.png`). |
 | **bgm** | Nhạc nền | Điền tên file nhạc (ví dụ: `tdtu_theme.mp3`) hoặc `stop` để tắt. |
 | **char_anim** | Hiệu ứng hiện hình | Ví dụ: `fade-in` (mặc định), `slide-in-right`. |
-| **dialogue** | Lời thoại | **Bắt buộc**. Nội dung văn bản nhân vật nói. |
-| **choices** | Các lựa chọn | Dùng định dạng JSON (Xem mục 2). |
+| **dialogue** | Lời thoại | **Bắt buộc**. Nhập text thông thường hoặc mã JSON `{"vi": "Tiếng Việt", "en": "English"}` để hỗ trợ 2 ngôn ngữ. |
+| **choices** | Các lựa chọn | Dùng định dạng JSON hoặc viết tắt (Shorthand) (Xem mục 2). |
 | **next_id** | Nhảy đến dòng | Điền `scene_id` của dòng muốn tiếp nối. |
 
 ### 2. Hệ thống Đặt tên & Biến số
@@ -60,14 +60,32 @@ Trong trình phát nhạc, nhấn vào biểu tượng 🔁 để bật chế đ
 
 ## 2. Quy tắc về Lựa chọn (Choices)
 
-Cột `choices` phải nhập theo đúng định dạng JSON bên dưới:
+Cột `choices` hỗ trợ 2 định dạng:
 
+**Cách 1: Viết tắt (Shorthand) - Khuyên dùng cho người mới**
+Ngăn cách các lựa chọn bằng `;;` và ngăn cách Lời thoại | ID Scene kế bằng `|`, ví dụ:
+`Đồng ý đi cùng|GO_WITH_HER ;; Từ chối|REJECT_HER`
+
+**Cách 2: Định dạng dữ liệu (JSON) - Dùng khi có ký tự đặc biệt**
 ```json
 [
   {"text": "Đồng ý đi cùng Hạo Nhiên", "next_id": "GO_WITH_HER"},
   {"text": "Từ chối vì bận chạy deadline", "next_id": "REJECT_HER"}
 ]
 ```
+
+---
+
+# 🌐 Hệ thống Đa ngôn ngữ (i18n)
+
+Game hiện tại hỗ trợ chuyển giao diện tĩnh và kịch bản cốt truyện tự động (Live Translation) giữa Tiếng Việt và Tiếng Anh:
+
+1. **Giao diện (UI)**: Nội dung như Settings, Menu, Navigation, Gallery... được quản lý ở file `i18n.js`. Không cần chỉnh sửa qua Supabase.
+2. **Kịch bản (Scripts)**: Để cốt truyện có 2 ngôn ngữ, hãy nhập ở dạng JSONB cục bộ ngay vào cột `dialogue`. Engine sẽ tự động trích xuất theo ngôn ngữ người dùng đang chọn:
+   ```json
+   {"vi": "Xin chào!", "en": "Hello!"}
+   ```
+   *(Ngôn ngữ mặc định được tự động thiết lập và lưu trên trình duyệt của người chơi)*
 
 ---
 

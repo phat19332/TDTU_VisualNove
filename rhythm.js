@@ -524,15 +524,22 @@ export class RhythmGame {
     window.addEventListener('keyup', this.handleKeyUp);
     
     this.isPlaying = true;
-    setTimeout(() => {
+    window.isRhythmActive = true;
+    this.timeoutId = setTimeout(() => {
       if(!this.isPlaying) return;
       this.audio.startBGM(() => { if(this.isPlaying) this.stop(true); });
-      requestAnimationFrame(this.renderLoop);
+      this.rafId = requestAnimationFrame(this.renderLoop);
     }, 1000);
   }
   
   stop(isVictory, silent = false) {
     this.isPlaying = false;
+    window.isRhythmActive = false;
+    
+    // Dọn dẹp tài nguyên
+    if (this.timeoutId) clearTimeout(this.timeoutId);
+    if (this.rafId) cancelAnimationFrame(this.rafId);
+    
     window.removeEventListener('keydown', this.handleKeyDown);
     window.removeEventListener('keyup', this.handleKeyUp);
     this.audio.stopBGM();
@@ -550,7 +557,7 @@ export class RhythmGame {
   }
   
   handleKeyDown(e) {
-    if (!this.isPlaying) return;
+    if (!window.isRhythmActive || !this.isPlaying) return;
     if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
     
     const laneObj = this.notesMgr.lanes.find(l => l.key === e.code && l.type === 'player');
@@ -573,6 +580,7 @@ export class RhythmGame {
   }
   
   handleKeyUp(e) {
+    if (!window.isRhythmActive) return;
     this.activeKeys[e.code] = false;
     const laneObj = this.notesMgr.lanes.find(l => l.key === e.code && l.type === 'player');
     if (laneObj) {
@@ -623,6 +631,6 @@ export class RhythmGame {
     // Kiểm tra thời lượng Beatmap để End Game
     if (currTime > this.endTime) { this.stop(true); return; }
     
-    requestAnimationFrame(this.renderLoop);
+    this.rafId = requestAnimationFrame(this.renderLoop);
   }
 }
