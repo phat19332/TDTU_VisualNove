@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Time, Dreams, Trials & Us</title>
+  <link rel="icon" type="image/png" href="/assets/logo/feg_logo.png" />
   <link rel="stylesheet" href="/style.css">
   <!-- Google Fonts: Inter cho Text thông thường và Noto Serif cho Dialogue -->
   <link
@@ -168,12 +169,16 @@
     <!-- Overlay: Nhập Player ID -->
     <div id="player-id-overlay" class="modal-overlay hidden">
       <div class="modal-content player-id-content">
+        <button id="btn-back-player" class="corner-back-btn" type="button" title="Back" aria-label="Back">←</button>
         <h2 class="modal-title" data-i18n="player-id-title">Nhập Tên / ID Người Chơi</h2>
-        <p style="text-align:center;color:#666;font-size:0.95rem;" data-i18n="player-id-desc">Dùng để lưu tiến trình game trên máy chủ.<br>Bạn có thể nhập bất kỳ tên gì!</p>
+        <p style="text-align:center;color:#666;font-size:0.95rem;" data-i18n="player-id-desc">Dùng để lưu tiến trình
+          game trên máy chủ.<br>Bạn có thể nhập bất kỳ tên gì!</p>
         <input type="text" id="player-id-input" class="player-id-input" placeholder="VD: HaoNhien2026" maxlength="30">
-        <button id="btn-confirm-player" class="modal-close-btn" style="background:var(--tdt-blue);" data-i18n="player-id-confirm">Xác Nhận & Chơi</button>
+        <button id="btn-confirm-player" class="modal-close-btn" style="background:var(--tdt-blue);"
+          data-i18n="player-id-confirm">Xác Nhận & Chơi</button>
         <button id="btn-skip-player" class="modal-close-btn"
-          style="background:#999;margin-top:5px;font-size:0.9rem;padding:8px 30px;" data-i18n="player-id-skip">Chơi Ẩn Danh (Không Lưu
+          style="background:#999;margin-top:5px;font-size:0.9rem;padding:8px 30px;" data-i18n="player-id-skip">Chơi Ẩn
+          Danh (Không Lưu
           Online)</button>
       </div>
     </div>
@@ -182,7 +187,7 @@
     <div id="settings-overlay" class="modal-overlay hidden">
       <div class="modal-content">
         <h2 class="modal-title" data-i18n="settings-title">Cài Đặt</h2>
-        
+
         <div class="settings-group">
           <label for="game-language"><span data-i18n="settings-lang">Ngôn Ngữ (Language): </span></label>
           <select id="game-language" class="settings-select">
@@ -192,21 +197,26 @@
         </div>
 
         <div class="settings-group">
-          <label for="bgm-volume"><span data-i18n="settings-bgm">Âm Lượng Nhạc Nền (BGM): </span><span id="bgm-val">100</span>%</label>
+          <label for="bgm-volume"><span data-i18n="settings-bgm">Âm Lượng Nhạc Nền (BGM): </span><span
+              id="bgm-val">100</span>%</label>
           <input type="range" id="bgm-volume" min="0" max="100" value="100">
         </div>
         <div class="settings-group">
-          <label for="sfx-volume"><span data-i18n="settings-sfx">Âm Lượng Hiệu Ứng (SFX): </span><span id="sfx-val">100</span>%</label>
+          <label for="sfx-volume"><span data-i18n="settings-sfx">Âm Lượng Hiệu Ứng (SFX): </span><span
+              id="sfx-val">100</span>%</label>
           <input type="range" id="sfx-volume" min="0" max="100" value="100">
         </div>
         <div class="settings-group">
-          <label for="text-speed"><span data-i18n="settings-speed">Tốc Độ Chữ: </span><span id="speed-val">Bình thường</span></label>
+          <label for="text-speed"><span data-i18n="settings-speed">Tốc Độ Chữ: </span><span id="speed-val">Bình
+              thường</span></label>
           <input type="range" id="text-speed" min="10" max="100" value="25" step="5" dir="rtl">
         </div>
-        
+
         <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button id="btn-global-quit" class="modal-close-btn" style="display: none; background: #64748b; flex: 1;" data-i18n="btn-global-quit">⬅ Thoát Game</button>
-            <button id="btn-close-settings" class="modal-close-btn" style="flex: 2;" data-i18n="btn-close-settings">Thoát Cài Đặt</button>
+          <button id="btn-global-quit" class="modal-close-btn" style="display: none; background: #64748b; flex: 1;"
+            data-i18n="btn-global-quit">⬅ Thoát Game</button>
+          <button id="btn-close-settings" class="modal-close-btn" style="flex: 2;" data-i18n="btn-close-settings">Thoát
+            Cài Đặt</button>
         </div>
       </div>
     </div>
@@ -214,12 +224,15 @@
     <!-- Overlay: Chọn Tên Nhân Vật -->
     <div id="mc-name-overlay" class="modal-overlay hidden">
       <div class="modal-content mc-name-content">
-        <h2 class="modal-title">Đặt Tên Cho Nhân Vật</h2>
-        <p style="text-align:center;color:#666;font-size:0.95rem;margin-bottom:20px;">
+        <button id="btn-back-name" class="corner-back-btn" type="button" title="Back" aria-label="Back">←</button>
+        <h2 class="modal-title" data-i18n="mc-name-title">Đặt Tên Cho Nhân Vật</h2>
+        <p style="text-align:center;color:#666;font-size:0.95rem;margin-bottom:20px;" data-i18n="mc-name-desc">
           Tên này sẽ xuất hiện trong các đoạn hội thoại suốt trò chơi.
         </p>
-        <input type="text" id="mc-name-input" class="player-id-input" placeholder="Tên bạn mong muốn..." maxlength="20">
-        <button id="btn-confirm-name" class="modal-close-btn" style="background:var(--tdt-blue); margin-top:20px;">
+        <input type="text" id="mc-name-input" class="player-id-input" placeholder="Tên bạn mong muốn..."
+          data-i18n-placeholder="mc-name-placeholder" maxlength="20">
+        <button id="btn-confirm-name" class="modal-close-btn" style="background:var(--tdt-blue); margin-top:20px;"
+          data-i18n="mc-name-confirm">
           Bắt Đầu Hành Trình
         </button>
       </div>
@@ -230,76 +243,113 @@
       <div class="modal-content gallery-content">
         <h2 class="modal-title" data-i18n="gallery-title">🖼️ Gallery - Kỷ Niệm TDTU</h2>
         <div id="gallery-grid" class="gallery-grid">
-           <!-- Ảnh sẽ được load qua JS -->
+          <!-- Ảnh sẽ được load qua JS -->
         </div>
         <button id="btn-close-gallery" class="modal-close-btn" data-i18n="btn-close-global">Quay Lại</button>
       </div>
     </div>
 
     <!-- Fullscreen ImageViewer -->
-    <div id="fullscreen-view" class="modal-overlay hidden" style="z-index: 9999; background: rgba(0,0,0,0.95); cursor: zoom-out;">
-      <img id="fullscreen-img" src="" style="max-width: 95%; max-height: 95%; object-fit: contain; pointer-events: none; -webkit-user-drag: none;">
-      <button id="btn-close-fullscreen" title="Đóng" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); color: white; width: 44px; height: 44px; border-radius: 50%; border: none; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px);">✕</button>
+    <div id="fullscreen-view" class="modal-overlay hidden"
+      style="z-index: 9999; background: rgba(0,0,0,0.95); cursor: zoom-out;">
+      <img id="fullscreen-img" src=""
+        style="max-width: 95%; max-height: 95%; object-fit: contain; pointer-events: none; -webkit-user-drag: none;">
+      <button id="btn-close-fullscreen" title="Đóng"
+        style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); color: white; width: 44px; height: 44px; border-radius: 50%; border: none; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px);">✕</button>
     </div>
 
     <!-- Rhythm Game Overlay -->
-    <div id="rhythm-overlay" class="modal-overlay hidden" style="z-index: 9999; background: rgba(0,0,0,0.85); flex-direction: column; overflow: hidden;">
-      
+    <div id="rhythm-overlay" class="modal-overlay hidden"
+      style="z-index: 9999; background: rgba(0,0,0,0.85); flex-direction: column; overflow: hidden;">
+
       <!-- Menu Chọn Độ Khó -->
-      <div id="rhythm-difficulty-menu" style="position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.9); z-index: 100;">
-        <h1 style="color: #fff; text-shadow: 0 0 15px #c084fc; font-family: var(--font-title); margin-bottom: 30px; font-size: 3rem;" data-i18n="rhythm-diff-title">CHỌN ĐỘ KHÓ</h1>
+      <div id="rhythm-difficulty-menu"
+        style="position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.9); z-index: 100;">
+        <h1
+          style="color: #fff; text-shadow: 0 0 15px #c084fc; font-family: var(--font-title); margin-bottom: 30px; font-size: 3rem;"
+          data-i18n="rhythm-diff-title">CHỌN ĐỘ KHÓ</h1>
         <div style="display: flex; gap: 20px;">
-          <button class="diff-btn" data-level="1" data-i18n="rhythm-diff-1" style="background: #4ade80; color: #064e3b;">Em Bé 👶</button>
-          <button class="diff-btn" data-level="2" data-i18n="rhythm-diff-2" style="background: #38bdf8; color: #0c4a6e;">Học Sinh 🎒</button>
-          <button class="diff-btn" data-level="3" data-i18n="rhythm-diff-3" style="background: #f1f5f9; color: #0f172a;">Người Lớn 👔</button>
-          <button class="diff-btn" data-level="4" data-i18n="rhythm-diff-4" style="background: #ef4444; color: #450a0a;">Nhóc Trùm 💀</button>
+          <button class="diff-btn" data-level="1" data-i18n="rhythm-diff-1"
+            style="background: #4ade80; color: #064e3b;">Em Bé 👶</button>
+          <button class="diff-btn" data-level="2" data-i18n="rhythm-diff-2"
+            style="background: #38bdf8; color: #0c4a6e;">Học Sinh 🎒</button>
+          <button class="diff-btn" data-level="3" data-i18n="rhythm-diff-3"
+            style="background: #f1f5f9; color: #0f172a;">Người Lớn 👔</button>
+          <button class="diff-btn" data-level="4" data-i18n="rhythm-diff-4"
+            style="background: #ef4444; color: #450a0a;">Nhóc Trùm 💀</button>
         </div>
       </div>
 
       <!-- Loading Screen -->
-      <div id="rhythm-loader" class="hidden" style="color: white; font-size: 1.5rem; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 50;" data-i18n="rhythm-loading">
+      <div id="rhythm-loader" class="hidden"
+        style="color: white; font-size: 1.5rem; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 50;"
+        data-i18n="rhythm-loading">
         Bắt đầu load assets...
       </div>
-      
+
       <!-- Rhythm In-game UI -->
-      <div id="rhythm-ui" class="hidden" style="width: 100%; height: 100%; position: absolute; top: 0; pointer-events: none;">
-        
+      <div id="rhythm-ui" class="hidden"
+        style="width: 100%; height: 100%; position: absolute; top: 0; pointer-events: none;">
+
         <!-- Score & Combo Top Center -->
-        <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 40px; font-family: var(--font-title); z-index: 10; text-shadow: 0 4px 6px rgba(0,0,0,0.8);">
-          <div style="font-size: 2rem; color: #e2e8f0;">Score: <span id="rhythm-score" style="color: #fff;">0</span></div>
-          <div style="font-size: 2rem; color: #60a5fa;">Combo: <span id="rhythm-combo" style="color: #fff;">0</span></div>
+        <div
+          style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 40px; font-family: var(--font-title); z-index: 10; text-shadow: 0 4px 6px rgba(0,0,0,0.8);">
+          <div style="font-size: 2rem; color: #e2e8f0;">Score: <span id="rhythm-score" style="color: #fff;">0</span>
+          </div>
+          <div style="font-size: 2rem; color: #60a5fa;">Combo: <span id="rhythm-combo" style="color: #fff;">0</span>
+          </div>
         </div>
 
         <!-- Tug-of-war Health Bar Bottom -->
-        <div style="position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 60%; max-width: 800px; display: flex; flex-direction: column; align-items: center;">
-             <div id="rhythm-health-bg" style="width: 100%; height: 26px; border: 4px solid #fff; border-radius: 20px; overflow: hidden; display: flex; position: relative;">
-                 <div style="position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; background: white; z-index: 5;"></div>
-                 <div id="rhythm-health-enemy" style="background: #ef4444; width: 50%; transition: width 0.15s ease-out;"></div>
-                 <div id="rhythm-health-player" style="background: #4ade80; width: 50%; transition: width 0.15s ease-out;"></div>
-             </div>
+        <div
+          style="position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 60%; max-width: 800px; display: flex; flex-direction: column; align-items: center;">
+          <div id="rhythm-health-bg"
+            style="width: 100%; height: 26px; border: 4px solid #fff; border-radius: 20px; overflow: hidden; display: flex; position: relative;">
+            <div style="position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; background: white; z-index: 5;">
+            </div>
+            <div id="rhythm-health-enemy" style="background: #ef4444; width: 50%; transition: width 0.15s ease-out;">
+            </div>
+            <div id="rhythm-health-player" style="background: #4ade80; width: 50%; transition: width 0.15s ease-out;">
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Center Verdict text (Perfect, Good...) -->
-      <div id="rhythm-judgment" style="position: absolute; top: 35%; font-size: 3.5rem; font-family: var(--font-title); font-weight: 900; color: white; text-shadow: 0 0 15px rgba(255,255,255,1); opacity: 0; transform: scale(0.5); pointer-events: none; transition: all 0.1s; z-index: 20;"></div>
-      
+      <div id="rhythm-judgment"
+        style="position: absolute; top: 35%; font-size: 3.5rem; font-family: var(--font-title); font-weight: 900; color: white; text-shadow: 0 0 15px rgba(255,255,255,1); opacity: 0; transform: scale(0.5); pointer-events: none; transition: all 0.1s; z-index: 20;">
+      </div>
+
       <!-- Canvas Render FNF (Larger default width to handle dual screen) -->
-      <canvas id="rhythm-canvas" width="1000" height="700" class="hidden" style="max-width: 100%; max-height: 100vh; pointer-events: none;"></canvas>
-      
+      <canvas id="rhythm-canvas" width="1000" height="700" class="hidden"
+        style="max-width: 100%; max-height: 100vh; pointer-events: none;"></canvas>
+
       <!-- Close / Exit button -->
-      <button id="btn-close-rhythm" class="modal-close-btn hidden" style="position: absolute; bottom: 20px; right: 20px; background: #ef4444; z-index: 100;">Bỏ cuộc (Thoát)</button>
+      <button id="btn-close-rhythm" class="modal-close-btn hidden"
+        style="position: absolute; bottom: 20px; right: 20px; background: #ef4444; z-index: 100;"
+        data-i18n="btn-rhythm-quit">Bỏ cuộc (Thoát)</button>
     </div>
 
     <!-- Navigation Guard Modal (Save/Exit) -->
-    <div id="exit-guard-modal" class="modal-overlay hidden" style="z-index: 10000; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(12px);">
-      <div class="glass-panel" style="width: 500px; padding: 40px; text-align: center; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 20px;">
-        <h2 style="color: var(--tdt-gold); font-family: var(--font-title); font-size: 2.5rem; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(251, 191, 36, 0.4);" data-i18n="guard-title">Khoan Đã!</h2>
-        <p id="exit-guard-text" style="color: #fff; font-size: 1.2rem; line-height: 1.5; margin-bottom: 20px;">Hành trình này rất quan trọng, bạn chắc chắn muốn dừng chân tại đây mà chưa lưu lại tiến trình chứ?</p>
-        
+    <div id="exit-guard-modal" class="modal-overlay hidden"
+      style="z-index: 10000; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(12px);">
+      <div class="glass-panel"
+        style="width: 500px; padding: 40px; text-align: center; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 20px;">
+        <h2
+          style="color: var(--tdt-gold); font-family: var(--font-title); font-size: 2.5rem; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(251, 191, 36, 0.4);"
+          data-i18n="guard-title">Khoan Đã!</h2>
+        <p id="exit-guard-text" style="color: #fff; font-size: 1.2rem; line-height: 1.5; margin-bottom: 20px;">Hành
+          trình này rất quan trọng, bạn chắc chắn muốn dừng chân tại đây mà chưa lưu lại tiến trình chứ?</p>
+
         <div style="display: flex; flex-direction: column; gap: 15px;">
-          <button id="btn-guard-save" class="diff-btn" style="background: #4ade80; color: #064e3b; box-shadow: 0 4px 15px rgba(74, 222, 128, 0.4);" data-i18n="guard-save">Lưu Lại &amp; Thoát</button>
-          <button id="btn-guard-quit" class="diff-btn" style="background: #ef4444; color: #450a0a; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);" data-i18n="guard-quit">Vẫn Thoát (Không Lưu)</button>
-          <button id="btn-guard-cancel" class="diff-btn" style="background: #475569; color: #f8fafc; font-size: 1.2rem;" data-i18n="guard-cancel">Hủy Bỏ (Quay Lại Màn Chơi)</button>
+          <button id="btn-guard-save" class="diff-btn"
+            style="background: #4ade80; color: #064e3b; box-shadow: 0 4px 15px rgba(74, 222, 128, 0.4);"
+            data-i18n="guard-save">Lưu Lại &amp; Thoát</button>
+          <button id="btn-guard-quit" class="diff-btn"
+            style="background: #ef4444; color: #450a0a; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);"
+            data-i18n="guard-quit">Vẫn Thoát (Không Lưu)</button>
+          <button id="btn-guard-cancel" class="diff-btn" style="background: #475569; color: #f8fafc; font-size: 1.2rem;"
+            data-i18n="guard-cancel">Hủy Bỏ (Quay Lại Màn Chơi)</button>
         </div>
       </div>
     </div>

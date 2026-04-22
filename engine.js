@@ -36,20 +36,32 @@ export class VNEngine {
     
     // BGM tracking for Music Player UI
     this.currentBgmUrl = null;
-    this.onBgmChange = null; // Callback: (url) => {}
-    this.onBgmLockChange = null; // Callback: (isLocked) => {}
     this.isPlaylistMode = false; // Mặc định lặp 1 bài
     
     // Player State
-    this.mcName = "Người chơi"; 
-    this.onAutoSave = null; // Callback trigger auto save
-    this.onCgUnlock = null; // Callback trigger gallery unlock
+    this.mcName = "Người chơi";
 
     // Character Slot Tracking (lưu trữ tên nhân vật đang đứng ở mỗi slot)
     this.slotState = {
-      l: { name: null, id: null }, 
-      r: { name: null, id: null }
+      l: { name: null, id: null, emotion: null }, 
+      r: { name: null, id: null, emotion: null }
     };
+
+    // Callbacks (declared here for TS type checking)
+    /** @type {((lang: string) => void) | null} */
+    this.onLanguageChange = null;
+    /** @type {(() => void) | null} */
+    this.onPlaylistNext = null;
+    /** @type {(() => void) | null} */
+    this.onExitScreen = null;
+    /** @type {(() => void) | null} */
+    this.onAutoSave = null;
+    /** @type {((id: string, url: string) => void) | null} */
+    this.onCgUnlock = null;
+    /** @type {((url: string | null) => void) | null} */
+    this.onBgmChange = null;
+    /** @type {((isLocked: boolean) => void) | null} */
+    this.onBgmLockChange = null;
 
     // Bắt sự kiện kết thúc nhạc để chuyển bài (nếu bật Playlist)
     this.bgmAudio.addEventListener('ended', () => {
@@ -183,11 +195,14 @@ export class VNEngine {
         if (this.onBgmChange) this.onBgmChange(null);
       } else {
         // Chuẩn hóa đường dẫn để so sánh (tránh phát lại nhạc đang chạy)
-        const absoluteBvUrl = new URL(line.bgm, window.location.href).href;
+        const newBgmUrl = getAssetUrl(line.bgm);
         const currentBvUrl = this.bgmAudio.src;
+        // bgmAudio.src is always an absolute URL set by the browser, so compare using URL normalization
+        let normalizedNew = newBgmUrl;
+        try { normalizedNew = new URL(newBgmUrl, window.location.href).href; } catch(e) {}
 
-        if (currentBvUrl !== absoluteBvUrl) {
-          this.bgmAudio.src = absoluteBvUrl;
+        if (currentBvUrl !== normalizedNew) {
+          this.bgmAudio.src = newBgmUrl;
           this.bgmAudio.volume = this.bgmVolume;
           this.currentBgmUrl = line.bgm;
           
@@ -229,9 +244,19 @@ export class VNEngine {
 
         if (charId === undefined) return; // Không có yêu cầu đổi thì giữ nguyên
 
+        // --- Ẩn nhân vật khi charId là null/rỗng ---
         if (charId === null || charId === "" || charId === 'null') {
             slotImg.style.opacity = '0';
-            this.slotState[side] = { name: null, id: null };
+            this.slotState[side] = { name: null, id: null, emotion: null };
+            return;
+        }
+
+        // --- Guard: Bỏ qua reload nếu cùng nhân vật + emotion ---
+        const prevState = this.slotState[side];
+        const emotionNorm = emotion || null;
+        if (prevState.id === charId && prevState.emotion === emotionNorm) {
+            // Nhân vật không đổi, không cần reload sprite — chỉ đảm bảo đang hiển thị
+            slotImg.style.opacity = '1';
             return;
         }
 
@@ -253,7 +278,8 @@ export class VNEngine {
         // Lưu state để tí đối chiếu Focus
         this.slotState[side] = { 
             name: line.speaker && charId === line.char_name ? line.speaker : charId,
-            id: charId 
+            id: charId,
+            emotion: emotionNorm
         };
     };
 

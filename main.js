@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { VNEngine } from './engine.js';
 import { storyScript as localScript } from './gameData.js';
 import { initSupabase, fetchScript, fetchMusic, saveGame, loadGame, getAllSaves, fetchGlobalData, saveGlobalData, getAssetUrl } from './supabase.js';
@@ -59,27 +60,40 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Khôi phục i18n
   const initialLang = localStorage.getItem('tdtu_lang') || 'vi';
-  
+
+  const initialLangSelect = document.getElementById('game-language');
+  if (initialLangSelect) {
+    initialLangSelect.value = initialLang;
+  }
+
   function applyI18n(lang) {
     const elements = document.querySelectorAll('[data-i18n]');
     elements.forEach(el => {
       const key = el.getAttribute('data-i18n');
       if (I18N_DICT[lang] && I18N_DICT[lang][key]) {
         if (el.tagName === 'INPUT' && el.type === 'button') {
-            el.value = I18N_DICT[lang][key];
+          el.value = I18N_DICT[lang][key];
         } else {
-            el.innerHTML = I18N_DICT[lang][key];
+          el.innerHTML = I18N_DICT[lang][key];
         }
       }
     });
-    
+
+    const placeholders = document.querySelectorAll('[data-i18n-placeholder]');
+    placeholders.forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (I18N_DICT[lang] && I18N_DICT[lang][key]) {
+        el.placeholder = I18N_DICT[lang][key];
+      }
+    });
+
     // Đặc tả Update Label Speed
     const elSpeed = document.getElementById('text-speed');
     if (elSpeed && parseInt(elSpeed.value) === 25) {
-       document.getElementById('speed-val').innerText = I18N_DICT[lang]['speed-normal'] || 'Bình thường';
+      document.getElementById('speed-val').innerText = I18N_DICT[lang]['speed-normal'] || 'Bình thường';
     }
   }
-  
+
   applyI18n(initialLang);
 
   // --- Khởi tạo Supabase ---
@@ -138,10 +152,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- Khởi tạo Engine ---
   const game = new VNEngine(gameScript, ui);
-  
+
   // Hook i18n
   game.onLanguageChange = (lang) => {
-      applyI18n(lang);
+    applyI18n(lang);
   };
 
   // --- Modals Elements ---
@@ -149,73 +163,74 @@ document.addEventListener('DOMContentLoaded', async () => {
   const logOverlay = document.getElementById('log-overlay');
   const settingsOverlay = document.getElementById('settings-overlay');
   const playerIdOverlay = document.getElementById('player-id-overlay');
-  
+
   // Navigation Guard / Exit Protection
   const exitGuardModal = document.getElementById('exit-guard-modal');
   const btnGlobalQuit = document.getElementById('btn-global-quit');
   let currentExitCallback = null;
 
   function promptExitCheck(callback) {
-      const guardText = document.getElementById('exit-guard-text');
-      const btnSave = document.getElementById('btn-guard-save');
-      
-      currentExitCallback = callback;
-      
-      if (game.isDirty) {
-          // Trường hợp: Có tiến trình mới chưa lưu
-          if (guardText) guardText.textContent = "Hành trình này rất quan trọng, bạn chắc chắn muốn dừng chân tại đây mà chưa lưu lại tiến trình chứ?";
-          if (btnSave) btnSave.style.display = "block";
-      } else {
-          // Trường hợp: Đã lưu hoặc chưa có tiến trình mới
-          if (guardText) guardText.textContent = "Bạn có chắc chắn muốn thoát và quay lại màn hình chính không?";
-          if (btnSave) btnSave.style.display = "none";
-      }
-      
-      exitGuardModal.classList.remove('hidden');
+    const guardText = document.getElementById('exit-guard-text');
+    const btnSave = document.getElementById('btn-guard-save');
+    const currLang = localStorage.getItem('tdtu_lang') || 'vi';
+
+    currentExitCallback = callback;
+
+    if (game.isDirty) {
+      // Trường hợp: Có tiến trình mới chưa lưu
+      if (guardText) guardText.textContent = (I18N_DICT[currLang] && I18N_DICT[currLang]['guard-text-dirty']) ? I18N_DICT[currLang]['guard-text-dirty'] : "Hành trình này rất quan trọng, bạn chắc chắn muốn dừng chân tại đây mà chưa lưu lại tiến trình chứ?";
+      if (btnSave) btnSave.style.display = "block";
+    } else {
+      // Trường hợp: Đã lưu hoặc chưa có tiến trình mới
+      if (guardText) guardText.textContent = (I18N_DICT[currLang] && I18N_DICT[currLang]['guard-text-clean']) ? I18N_DICT[currLang]['guard-text-clean'] : "Bạn có chắc chắn muốn thoát và quay lại màn hình chính không?";
+      if (btnSave) btnSave.style.display = "none";
+    }
+
+    exitGuardModal.classList.remove('hidden');
   }
 
   document.getElementById('btn-guard-save').addEventListener('click', async () => {
-      game.playClick();
-      await triggerAutoSave();
-      game.isDirty = false;
-      exitGuardModal.classList.add('hidden');
-      if (currentExitCallback) currentExitCallback();
+    game.playClick();
+    await triggerAutoSave();
+    game.isDirty = false;
+    exitGuardModal.classList.add('hidden');
+    if (currentExitCallback) currentExitCallback();
   });
 
   document.getElementById('btn-guard-quit').addEventListener('click', () => {
-      game.playClick();
-      game.isDirty = false;
-      exitGuardModal.classList.add('hidden');
-      if (currentExitCallback) currentExitCallback();
+    game.playClick();
+    game.isDirty = false;
+    exitGuardModal.classList.add('hidden');
+    if (currentExitCallback) currentExitCallback();
   });
 
   document.getElementById('btn-guard-cancel').addEventListener('click', () => {
-      game.playClick();
-      exitGuardModal.classList.add('hidden');
-      currentExitCallback = null;
+    game.playClick();
+    exitGuardModal.classList.add('hidden');
+    currentExitCallback = null;
   });
 
   if (btnGlobalQuit) {
-      btnGlobalQuit.addEventListener('click', () => {
-          settingsOverlay.classList.add('hidden');
-          promptExitCheck(() => {
-              // Hủy Rhythm Game nếu nó đang vô tình chạy
-              if (window.rhythmGameRef && window.rhythmGameRef.isPlaying) {
-                  window.rhythmGameRef.stop(false, true); // true = silent/no alert
-              }
-              game.exitToTitle();
-          });
+    btnGlobalQuit.addEventListener('click', () => {
+      settingsOverlay.classList.add('hidden');
+      promptExitCheck(() => {
+        // Hủy Rhythm Game nếu nó đang vô tình chạy
+        if (window.rhythmGameRef && window.rhythmGameRef.isPlaying) {
+          window.rhythmGameRef.stop(false, true); // true = silent/no alert
+        }
+        game.exitToTitle();
       });
+    });
   }
 
   // Hook ẩn/hiện nút Quit Toàn Cục khi ở Visual Novel
   game.onExitScreen = () => {
-      if(btnGlobalQuit) btnGlobalQuit.style.display = 'none';
+    if (btnGlobalQuit) btnGlobalQuit.style.display = 'none';
   };
   const originalGameStart = game.start.bind(game);
   game.start = () => {
-      if(btnGlobalQuit) btnGlobalQuit.style.display = 'block'; // Sẽ thành flex item nều layout hỗ trợ
-      originalGameStart();
+    if (btnGlobalQuit) btnGlobalQuit.style.display = 'block'; // Sẽ thành flex item nều layout hỗ trợ
+    originalGameStart();
   };
 
   let saveLoadMode = 'save';
@@ -246,6 +261,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     showMcNameModal();
   });
 
+  document.getElementById('btn-back-player').addEventListener('click', () => {
+    game.playClick();
+    playerIdOverlay.classList.add('hidden');
+  });
+
   // --- Start & Load from Title ---
   document.getElementById('btn-start').addEventListener('click', () => {
     game.playClick();
@@ -266,59 +286,66 @@ document.addEventListener('DOMContentLoaded', async () => {
     settingsOverlay.classList.remove('hidden');
   });
 
-  // Gallery buttons (title screen + in-game icon)
-  const galleryBtns = [document.getElementById('btn-gallery'), document.getElementById('btn-gallery-global')];
-  galleryBtns.forEach(btn => {
-    if (btn) btn.addEventListener('click', (e) => {
+  // Gallery button (in-game icon — btn-gallery-global only; btn-gallery does not exist in HTML)
+  const galleryGlobalBtn = document.getElementById('btn-gallery-global');
+  if (galleryGlobalBtn) {
+    galleryGlobalBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       game.playClick();
       openGallery();
     });
-  });
+  }
 
   // --- Khởi tạo Rhythm Game (Test Mode) ---
   const rhythmGame = new RhythmGame('rhythm-overlay', 'rhythm-canvas');
   const testRhythmBtn = document.createElement('button');
   testRhythmBtn.className = 'menu-btn';
   testRhythmBtn.style.background = 'linear-gradient(90deg, #9333ea, #ec4899)';
-  testRhythmBtn.textContent = '🎶 Test Nhịp Điệu (MỚI)';
+  testRhythmBtn.setAttribute('data-i18n', 'btn-test-rhythm');
+  testRhythmBtn.textContent = (I18N_DICT[initialLang] && I18N_DICT[initialLang]['btn-test-rhythm']) ? I18N_DICT[initialLang]['btn-test-rhythm'] : '🎶 Test Nhịp Điệu (MỚI)';
   testRhythmBtn.onclick = () => {
     game.playClick();
     rhythmGame.setVolume(game.bgmVolume, game.sfxVolume);
-    
+
     // Tạo Mock Beatmap: 0-3 là CPU, 4-7 là Player
     // Thể hiện luân phiên lượt hát để biểu diễn Camera Zoom
     // Fetch bản đồ 120 giây (beatmap_test.json)
-    fetch('beatmap_test.json')
-      .then(res => res.json())
+    fetch('/beatmap_test.json')
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then(beatmapData => {
-         // Gọi game, truyền tạm background âm thanh của logo studio
-         // Bạn có thể chuẩn bị một file âm thanh ngắn (ví dụ: 'hit_sound.mp3') và truyền vào thay chỗ của 'null' bên dưới
-         window.rhythmGameRef = rhythmGame;
-         rhythmGame.start(beatmapData, 'studio_intro.mp3', null, async (result) => {
-           if(result.silent) return; // Nếu bị ngắt bởi Quit thủ công thì không hiện Alert
-           
-           // Đánh dấu game có dữ liệu mới để bảo vệ Navigation
-           game.isDirty = true;
-           
-           alert(result.victory ? `Win! Bạn đạt được: ${result.score} Điểm\nMax Combo: ${result.maxCombo}` : `Game Over! Nhóc Trùm đã đánh bại bạn.\nĐiểm: ${result.score}`);
-           
-           // Lưu Highscore vào storage (mô phỏng)
-           const currentRhythmHighscore = parseInt(localStorage.getItem('tdtu_rhythm_highscore') || '0');
-           if (result.score > currentRhythmHighscore) {
-               localStorage.setItem('tdtu_rhythm_highscore', result.score);
-               console.log("Kỷ lục mới được lưu!");
-           }
-           
-           await triggerAutoSave();
-         });
+        // Gọi game, truyền tạm background âm thanh của logo studio
+        // Bạn có thể chuẩn bị một file âm thanh ngắn (ví dụ: 'hit_sound.mp3') và truyền vào thay chỗ của 'null' bên dưới
+        window.rhythmGameRef = rhythmGame;
+        rhythmGame.start(beatmapData, 'studio_intro.mp3', null, async (result) => {
+          if (result.silent) return; // Nếu bị ngắt bởi Quit thủ công thì không hiện Alert
+
+          // Đánh dấu game có dữ liệu mới để bảo vệ Navigation
+          game.isDirty = true;
+
+          alert(result.victory ? `Win! Bạn đạt được: ${result.score} Điểm\nMax Combo: ${result.maxCombo}` : `Game Over! Nhóc Trùm đã đánh bại bạn.\nĐiểm: ${result.score}`);
+
+          // Lưu Highscore vào storage (mô phỏng)
+          const currentRhythmHighscore = parseInt(localStorage.getItem('tdtu_rhythm_highscore') || '0');
+          if (result.score > currentRhythmHighscore) {
+            localStorage.setItem('tdtu_rhythm_highscore', result.score);
+            console.log("Kỷ lục mới được lưu!");
+          }
+
+          await triggerAutoSave();
+        });
       })
       .catch(err => {
-         console.error("Không tìm thấy file beatmap_test.json", err);
-         alert("Lỗi tải Beatmap rùi!");
+        console.error("Không tìm thấy file beatmap_test.json", err);
+        alert("Lỗi tải Beatmap rùi!");
       });
   };
-  document.querySelector('.menu-buttons').appendChild(testRhythmBtn);
+  const menuButtons = document.querySelector('.menu-buttons');
+  if (menuButtons) {
+    menuButtons.appendChild(testRhythmBtn);
+  }
 
   // --- Quick Menu Màn Hình Game ---
   document.getElementById('qm-save').addEventListener('click', (e) => { e.stopPropagation(); game.playClick(); openSaveLoadMenu('save'); });
@@ -333,27 +360,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('qm-settings').addEventListener('click', (e) => {
     e.stopPropagation();
     game.playClick();
-    
+
     // Đồng bộ menu Dropdown trước khi hiện
     const langSelect = document.getElementById('game-language');
     if (langSelect) {
-        langSelect.value = localStorage.getItem('tdtu_lang') || 'vi';
+      langSelect.value = localStorage.getItem('tdtu_lang') || 'vi';
     }
-    
+
     settingsOverlay.classList.remove('hidden');
   });
 
   const langSelectModal = document.getElementById('game-language');
   if (langSelectModal) {
-      langSelectModal.addEventListener('change', (e) => {
-          game.playClick();
-          const newLang = e.target.value;
-          game.setLanguage(newLang);
-          
-          if (langBtn) {
-             langBtn.textContent = newLang === 'vi' ? '🇻🇳 VI' : '🇬🇧 EN';
-          }
-      });
+    langSelectModal.addEventListener('change', (e) => {
+      game.playClick();
+      const newLang = e.target.value;
+      game.setLanguage(newLang);
+
+      if (langBtn) {
+        langBtn.textContent = newLang === 'vi' ? '🇻🇳 VI' : '🇬🇧 EN';
+      }
+    });
   }
 
   const langBtn = document.getElementById('qm-lang');
@@ -374,7 +401,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // --- Logic Modal Lưu/Tải ---
   function openSaveLoadMenu(mode) {
     saveLoadMode = mode;
-    document.getElementById('sl-title').textContent = mode === 'save' ? "Lưu Trò Chơi (Save)" : "Tải Trò Chơi (Load)";
+    const currLang = localStorage.getItem('tdtu_lang') || 'vi';
+    const titleKey = mode === 'save' ? 'sl-title-save' : 'sl-title-load';
+    document.getElementById('sl-title').textContent = (I18N_DICT[currLang] && I18N_DICT[currLang][titleKey]) ? I18N_DICT[currLang][titleKey] : (mode === 'save' ? 'Save Game' : 'Load Game');
     renderSlots();
     slOverlay.classList.remove('hidden');
   }
@@ -402,8 +431,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       let source = '';
 
       if (onlineSave) {
-        saveData = { 
-          index: onlineSave.script_index, 
+        saveData = {
+          index: onlineSave.script_index,
           date: new Date(onlineSave.saved_at).toLocaleString(),
           mcName: onlineSave.mc_name
         };
@@ -463,7 +492,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const arr = game.getLog();
     const area = document.getElementById('log-scroll-area');
     area.innerHTML = '';
-    
+
     const currLang = localStorage.getItem('tdtu_lang') || 'vi';
 
     if (arr.length === 0) {
@@ -500,15 +529,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   elSpeed.addEventListener('input', (e) => {
-      let rawVal = parseInt(e.target.value);
-      if (rawVal === 25) {
-        const currLang = localStorage.getItem('tdtu_lang') || 'vi';
-        const normalText = (I18N_DICT[currLang] && I18N_DICT[currLang]['speed-normal']) ? I18N_DICT[currLang]['speed-normal'] : 'Bình thường';
-        document.getElementById('speed-val').innerText = normalText;
-      } else {
-        document.getElementById('speed-val').innerText = rawVal + "ms";
-      }
-      game.textSpeed = rawVal;
+    let rawVal = parseInt(e.target.value);
+    if (rawVal === 25) {
+      const currLang = localStorage.getItem('tdtu_lang') || 'vi';
+      const normalText = (I18N_DICT[currLang] && I18N_DICT[currLang]['speed-normal']) ? I18N_DICT[currLang]['speed-normal'] : 'Bình thường';
+      document.getElementById('speed-val').innerText = normalText;
+    } else {
+      document.getElementById('speed-val').innerText = rawVal + "ms";
+    }
+    game.textSpeed = rawVal;
   });
 
   // --- Đóng Modals ---
@@ -516,7 +545,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-close-log').addEventListener('click', () => { game.playClick(); logOverlay.classList.add('hidden') });
   document.getElementById('btn-close-settings').addEventListener('click', () => { game.playClick(); settingsOverlay.classList.add('hidden') });
   document.getElementById('btn-close-gallery').addEventListener('click', () => { game.playClick(); galleryOverlay.classList.add('hidden') });
-  
+
   const fsView = document.getElementById('fullscreen-view');
   if (fsView) {
     document.getElementById('btn-close-fullscreen').addEventListener('click', () => { game.playClick(); fsView.classList.add('hidden') });
@@ -526,7 +555,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // --- Naming Logic ---
   const mcNameOverlay = document.getElementById('mc-name-overlay');
   const mcNameInput = document.getElementById('mc-name-input');
-  
+
   function showMcNameModal() {
     mcNameOverlay.classList.remove('hidden');
   }
@@ -536,14 +565,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     game.mcName = name || "Người chơi";
     mcNameOverlay.classList.add('hidden');
     game.playClick();
-    
+
     syncGlobalData().then(() => {
       game.start();
     });
   });
 
+  document.getElementById('btn-back-name').addEventListener('click', () => {
+    game.playClick();
+    mcNameOverlay.classList.add('hidden');
+    showPlayerIdModal();
+  });
+
   // --- Auto-save Logic ---
   let lastAutoSaveTime = 0;
+  let autoSaveToastTimer = null;
   game.onAutoSave = () => {
     const now = Date.now();
     if (now - lastAutoSaveTime > 30000) {
@@ -554,19 +590,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function triggerAutoSave() {
     const toast = document.getElementById('autosave-toast');
-    if (currentPlayerId && useOnlineSave) {
-      await saveGame(currentPlayerId, 0, game.currentIndex, game.mcName);
-      console.log("💾 Auto-saved to cloud slot 0");
+    try {
+      if (currentPlayerId && useOnlineSave) {
+        await saveGame(currentPlayerId, 0, game.currentIndex, game.mcName);
+        console.log("💾 Auto-saved to cloud slot 0");
+      }
+    } catch (err) {
+      console.warn('⚠️ Cloud auto-save failed, vẫn lưu local.', err);
+    } finally {
+      // Lưu local luôn
+      localStorage.setItem('tdtu_save_0', JSON.stringify({
+        index: game.currentIndex,
+        date: new Date().toLocaleString(),
+        mcName: game.mcName
+      }));
+
+      if (toast) {
+        toast.classList.add('show');
+        clearTimeout(autoSaveToastTimer);
+        autoSaveToastTimer = setTimeout(() => {
+          toast.classList.remove('show');
+        }, 1500);
+      }
+
+      // Gỡ cờ isDirty
+      game.isDirty = false;
     }
-    // Lưu local luôn
-    localStorage.setItem('tdtu_save_0', JSON.stringify({
-      index: game.currentIndex,
-      date: new Date().toLocaleString(),
-      mcName: game.mcName
-    }));
-    
-    // Gỡ cờ isDirty
-    game.isDirty = false;
   }
 
   // --- Gallery Logic ---
@@ -610,13 +659,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const isUnlocked = globalData.unlocked_cgs.includes(cg.id);
       const item = document.createElement('div');
       item.className = 'gallery-item' + (isUnlocked ? '' : ' locked');
-      
+
       const imgUrl = getAssetUrl(cg.url);
       item.innerHTML = `
         <img src="${imgUrl}" alt="${cg.title}">
         <div class="gallery-label">${isUnlocked ? cg.title : '???'}</div>
       `;
-      
+
       if (isUnlocked) {
         item.addEventListener('click', () => {
           game.playClick();
@@ -848,7 +897,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- Playlist Loop Mode ---
   const musicLoopAllBtn = document.getElementById('music-loop-all');
-  
+
   musicLoopAllBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     game.isPlaylistMode = !game.isPlaylistMode;
@@ -858,21 +907,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   game.onPlaylistNext = () => {
     if (allTracks.length === 0) return;
-    
+
     const currentUrl = game.bgmAudio.src;
     const currentFilename = extractFilename(currentUrl);
     let nextIdx = allTracks.findIndex(t => extractFilename(t.url) === currentFilename) + 1;
-    
+
     if (nextIdx >= allTracks.length) nextIdx = 0;
-    
+
     const nextTrack = allTracks[nextIdx];
     let trackUrl = nextTrack.url;
     if (trackUrl && !trackUrl.startsWith('http')) {
       trackUrl = getAssetUrl(trackUrl);
     }
-    
+
     game.bgmAudio.src = trackUrl;
-    game.bgmAudio.play().catch(() => {});
+    game.bgmAudio.play().catch(() => { });
     updateNowPlaying(trackUrl);
   };
 

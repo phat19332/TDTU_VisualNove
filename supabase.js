@@ -1,3 +1,4 @@
+// @ts-nocheck
 // ============================================
 // Supabase Client & API Helpers
 // Time, Dreams, Trials & Us - Visual Novel

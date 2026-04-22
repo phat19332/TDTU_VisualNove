@@ -18,6 +18,11 @@ export const I18N_DICT = {
     "player-id-desc": "Dùng để lưu tiến trình game trên máy chủ.<br>Bạn có thể nhập bất kỳ tên gì!",
     "player-id-confirm": "Xác Nhận & Chơi",
     "player-id-skip": "Chơi Ẩn Danh (Không Lưu Online)",
+    "btn-back": "Quay Lại",
+    "mc-name-title": "Đặt Tên Cho Nhân Vật",
+    "mc-name-desc": "Tên này sẽ xuất hiện trong các đoạn hội thoại suốt trò chơi.",
+    "mc-name-placeholder": "Tên bạn mong muốn...",
+    "mc-name-confirm": "Bắt Đầu Hành Trình",
     "settings-title": "Cài Đặt",
     "settings-lang": "Ngôn Ngữ (Language): ",
     "settings-bgm": "Âm Lượng Nhạc Nền (BGM): ",
@@ -37,7 +42,6 @@ export const I18N_DICT = {
     "rhythm-diff-3": "Người Lớn (Khó)",
     "rhythm-diff-4": "Nhóc Trùm (Mất nết)",
     "rhythm-loading": "Đang chuẩn bị âm thanh...",
-    "btn-rhythm-close": "✕ Đóng (Bỏ qua Cảnh này)",
     "game-logo": "Time, Dreams, Trials & Us",
     "guard-title": "Khoan Đã!",
     "guard-text-dirty": "Hành trình này rất quan trọng, bạn chắc chắn muốn dừng chân tại đây mà chưa lưu lại tiến trình chứ?",
@@ -48,7 +52,9 @@ export const I18N_DICT = {
     "autosave-toast": "💾 Đã tự động lưu...",
     "log-empty": "Chưa có cuộc trò chuyện nào...",
     "narrator": "Dẫn chuyện",
-    "speed-normal": "Bình thường"
+    "speed-normal": "Bình thường",
+    "btn-test-rhythm": "🎶 Test Nhịp Điệu (MỚI)",
+    "btn-rhythm-quit": "Bỏ cuộc (Thoát)"
   },
   en: {
     "btn-start": "New Game",
@@ -69,6 +75,11 @@ export const I18N_DICT = {
     "player-id-desc": "Used to save your progress on the server.<br>You can enter any name here!",
     "player-id-confirm": "Confirm & Play",
     "player-id-skip": "Play Anonymously (No Cloud Save)",
+    "btn-back": "Back",
+    "mc-name-title": "Name Your Character",
+    "mc-name-desc": "This name will appear in dialogues throughout the game.",
+    "mc-name-placeholder": "Your preferred name...",
+    "mc-name-confirm": "Start The Journey",
     "settings-title": "Settings",
     "settings-lang": "Language (Ngôn Ngữ): ",
     "settings-bgm": "BGM Volume: ",
@@ -88,7 +99,6 @@ export const I18N_DICT = {
     "rhythm-diff-3": "Adult (Hard)",
     "rhythm-diff-4": "Boss Baby (Insane)",
     "rhythm-loading": "Preparing audio...",
-    "btn-rhythm-close": "✕ Close (Skip this Scene)",
     "game-logo": "Time, Dreams, Trials & Us",
     "guard-title": "Wait!",
     "guard-text-dirty": "This journey is important. Are you sure you want to leave without saving your progress?",
@@ -99,6 +109,8 @@ export const I18N_DICT = {
     "autosave-toast": "💾 Auto-saved...",
     "log-empty": "No conversation yet...",
     "narrator": "Narrator",
-    "speed-normal": "Normal"
+    "speed-normal": "Normal",
+    "btn-test-rhythm": "🎶 Rhythm Test (NEW)",
+    "btn-rhythm-quit": "Give up (Quit)"
   }
 };

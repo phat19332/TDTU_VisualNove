@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "target": "ESNext",
+    "checkJs": true,
+    "baseUrl": "."
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".grapuco"
+  ]
+}
