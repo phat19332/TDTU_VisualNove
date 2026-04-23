@@ -4,6 +4,7 @@ import { storyScript as localScript } from './gameData.js';
 import { initSupabase, fetchScript, fetchMusic, saveGame, loadGame, getAllSaves, fetchGlobalData, saveGlobalData, getAssetUrl } from './supabase.js';
 import { RhythmGame } from './rhythm.js';
 import { I18N_DICT } from './i18n.js';
+import { WordleGame, renderWordleRow, getRandomWord } from './wordle.js';
 
 // Trạng thái Player
 let currentPlayerId = null;
@@ -163,6 +164,280 @@ document.addEventListener('DOMContentLoaded', async () => {
   const logOverlay = document.getElementById('log-overlay');
   const settingsOverlay = document.getElementById('settings-overlay');
   const playerIdOverlay = document.getElementById('player-id-overlay');
+  const wordleOverlay = document.getElementById('wordle-overlay');
+
+  // --- Wordle Mini Game ---
+  const WORDLE_LENGTH = 5;
+  const WORDLE_MAX_ATTEMPTS = 6;
+  const WORDLE_FLIP_TOTAL_MS = 1100; // 4*120ms delay + 460ms duration + 60ms buffer
+  let wordleGame = new WordleGame(getRandomWord(), { locale: 'en', wordLength: WORDLE_LENGTH, maxAttempts: WORDLE_MAX_ATTEMPTS });
+  let currentWordleTarget = wordleGame.targetWord;
+  const wordleBoard = document.getElementById('wordle-board');
+  const wordleKeyboard = document.getElementById('wordle-keyboard');
+  const wordleMessage = document.getElementById('wordle-message');
+  const btnWordleRestart = document.getElementById('btn-wordle-restart');
+  const WORDLE_KEY_ROWS = ['QWERTYUIOP', 'ASDFGHJKL', 'ENTERZXCVBNM⌫'];
+  let wordleDraft = '';
+  let wordleAnimating = false;
+
+  function initWordleBoard() {
+    if (!wordleBoard) return;
+    wordleBoard.innerHTML = '';
+    for (let i = 0; i < WORDLE_LENGTH * WORDLE_MAX_ATTEMPTS; i += 1) {
+      const cell = document.createElement('div');
+      cell.className = 'wordle-cell';
+      wordleBoard.appendChild(cell);
+    }
+  }
+
+  function createWordleKeyButton(label) {
+    const keyBtn = document.createElement('button');
+    keyBtn.className = 'wordle-key';
+    keyBtn.type = 'button';
+    keyBtn.textContent = label;
+
+    if (label === 'ENTER') {
+      keyBtn.classList.add('wide');
+      keyBtn.dataset.key = 'ENTER';
+    } else if (label === '⌫') {
+      keyBtn.classList.add('wide');
+      keyBtn.dataset.key = 'BACKSPACE';
+    } else {
+      keyBtn.dataset.key = label;
+    }
+
+    keyBtn.addEventListener('click', () => {
+      handleWordleKeyPress(keyBtn.dataset.key);
+    });
+
+    return keyBtn;
+  }
+
+  function initWordleKeyboard() {
+    if (!wordleKeyboard) return;
+
+    wordleKeyboard.innerHTML = '';
+    WORDLE_KEY_ROWS.forEach(row => {
+      const rowEl = document.createElement('div');
+      rowEl.className = 'wordle-keyboard-row';
+
+      if (row === 'ENTERZXCVBNM⌫') {
+        rowEl.appendChild(createWordleKeyButton('ENTER'));
+        'ZXCVBNM'.split('').forEach(letter => rowEl.appendChild(createWordleKeyButton(letter)));
+        rowEl.appendChild(createWordleKeyButton('⌫'));
+      } else {
+        row.split('').forEach(letter => rowEl.appendChild(createWordleKeyButton(letter)));
+      }
+
+      wordleKeyboard.appendChild(rowEl);
+    });
+  }
+
+  function getWordleCell(row, col) {
+    if (!wordleBoard) return null;
+    return wordleBoard.children[row * WORDLE_LENGTH + col] || null;
+  }
+
+  function updateWordleDraftRow() {
+    if (!wordleBoard) return;
+
+    const activeRow = wordleGame.attempts.length;
+    if (activeRow >= WORDLE_MAX_ATTEMPTS || wordleGame.isFinished) return;
+
+    for (let i = 0; i < WORDLE_LENGTH; i += 1) {
+      const cell = getWordleCell(activeRow, i);
+      if (!cell) continue;
+
+      const letter = wordleDraft[i] || '';
+      cell.textContent = letter;
+      cell.classList.remove('draft');
+      if (letter) cell.classList.add('draft');
+    }
+  }
+
+  function updateWordleKeyboardState(keyboardState = {}) {
+    if (!wordleKeyboard) return;
+
+    const keyButtons = wordleKeyboard.querySelectorAll('.wordle-key[data-key]');
+    keyButtons.forEach(btn => {
+      const key = btn.dataset.key;
+      if (!key || key === 'ENTER' || key === 'BACKSPACE') return;
+
+      const state = keyboardState[key.toLowerCase()];
+      btn.classList.remove('correct', 'present', 'absent', 'locked');
+      btn.disabled = false;
+
+      if (!state) return;
+      btn.classList.add(state);
+
+      if (state === 'absent') {
+        btn.classList.add('locked');
+      }
+    });
+  }
+
+  function resetWordleRound() {
+    const newTarget = getRandomWord();
+    wordleGame.reset();          // BUG FIX: phải reset trước khi đổi từ!
+    wordleGame.setTargetWord(newTarget);
+    currentWordleTarget = newTarget;
+    wordleDraft = '';
+    wordleAnimating = false;
+    initWordleBoard();
+    initWordleKeyboard();
+    updateWordleKeyboardState();
+    if (wordleMessage) wordleMessage.textContent = 'Nhập từ bằng bàn phím và bấm ENTER.';
+  }
+
+  function openWordleModal() {
+    resetWordleRound();
+    if (wordleOverlay) wordleOverlay.classList.remove('hidden');
+  }
+
+  function closeWordleModal() {
+    if (wordleOverlay) wordleOverlay.classList.add('hidden');
+  }
+
+  function isWordleOverlayOpen() {
+    return !!wordleOverlay && !wordleOverlay.classList.contains('hidden');
+  }
+
+  function isWordleLetterBlocked(letter) {
+    return false;
+  }
+
+  function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function handleWordleKeyPress(key) {
+    if (!isWordleOverlayOpen() || wordleAnimating || wordleGame.isFinished) return;
+
+    if (key === 'ENTER') {
+      handleWordleSubmit();
+      return;
+    }
+
+    if (key === 'BACKSPACE') {
+      if (wordleDraft.length > 0) {
+        wordleDraft = wordleDraft.slice(0, -1);
+        updateWordleDraftRow();
+      }
+      return;
+    }
+
+    if (!/^[A-Z]$/.test(key)) return;
+    if (wordleDraft.length >= WORDLE_LENGTH) return;
+    if (isWordleLetterBlocked(key)) return;
+
+    wordleDraft += key;
+    updateWordleDraftRow();
+
+    // BUG FIX: Thêm pop animation khi gõ chữ
+    const activeRow = wordleGame.attempts.length;
+    const col = wordleDraft.length - 1;
+    const cell = getWordleCell(activeRow, col);
+    if (cell) {
+      cell.classList.remove('pop');
+      // Force reflow để restart animation
+      void cell.offsetWidth;
+      cell.classList.add('pop');
+    }
+  }
+
+  async function handleWordleSubmit() {
+    if (!wordleMessage || !wordleBoard) return;
+
+    if (wordleDraft.length !== WORDLE_LENGTH) {
+      wordleMessage.textContent = 'Vui lòng nhập đúng 5 ký tự.';
+      // BUG FIX: Shake animation khi chưa nhập đủ chữ
+      shakeCurrentRow();
+      return;
+    }
+
+    const guess = wordleDraft.toLowerCase();
+    wordleAnimating = true;
+    wordleMessage.textContent = 'Đang kiểm tra từ vựng...';
+
+    const result = await wordleGame.submitGuess(guess);
+
+    if (!result.ok) {
+      wordleAnimating = false;
+      if (result.reason === 'NOT_IN_DICTIONARY') {
+        wordleMessage.textContent = 'Từ này không tồn tại trong từ điển.';
+        // BUG FIX: Shake khi từ không tồn tại
+        shakeCurrentRow();
+      } else if (result.reason === 'INVALID_LENGTH') {
+        wordleMessage.textContent = 'Từ đoán phải có đúng 5 ký tự.';
+        shakeCurrentRow();
+      } else if (result.reason === 'GAME_FINISHED') {
+        wordleMessage.textContent = 'Ván chơi đã kết thúc. Hãy mở lại để chơi mới.';
+      } else {
+        wordleMessage.textContent = 'Không thể gửi lượt đoán lúc này.';
+      }
+      return;
+    }
+
+    // BUG FIX: Xóa class draft khỏi các cell của hàng vừa submit
+    for (let i = 0; i < WORDLE_LENGTH; i++) {
+      const cell = getWordleCell(result.attemptIndex, i);
+      if (cell) cell.classList.remove('draft');
+    }
+
+    renderWordleRow(wordleBoard, result.attemptIndex, result.tiles);
+    await wait(WORDLE_FLIP_TOTAL_MS);
+    wordleDraft = '';
+    updateWordleKeyboardState(result.keyboardState);
+
+    if (result.isWin) {
+      wordleMessage.textContent = '✨ Chính xác! Bạn đã thắng!';
+      // BUG FIX: Win bounce animation
+      playWordleWinBounce(result.attemptIndex);
+      wordleAnimating = false;
+      return;
+    }
+
+    if (result.isFinished) {
+      wordleMessage.textContent = `😢 Hết lượt! Đáp án là ${currentWordleTarget.toUpperCase()}.`;
+      wordleAnimating = false;
+      return;
+    }
+
+    wordleMessage.textContent = `Còn ${result.attemptsLeft} lượt.`;
+    updateWordleDraftRow();
+    wordleAnimating = false;
+  }
+
+  // BUG FIX: Shake cả hàng hiện tại khi từ sai
+  function shakeCurrentRow() {
+    const activeRow = wordleGame.attempts.length;
+    const cells = [];
+    for (let i = 0; i < WORDLE_LENGTH; i++) {
+      const cell = getWordleCell(activeRow, i);
+      if (cell) cells.push(cell);
+    }
+    cells.forEach(cell => {
+      cell.classList.remove('wordle-row-shake');
+      void cell.offsetWidth; // force reflow
+      cell.classList.add('wordle-row-shake');
+    });
+    // Tự xóa sau khi animation xong
+    setTimeout(() => {
+      cells.forEach(cell => cell.classList.remove('wordle-row-shake'));
+    }, 500);
+  }
+
+  // BUG FIX: Bounce animation cho từng tile khi thắng
+  function playWordleWinBounce(rowIndex) {
+    for (let i = 0; i < WORDLE_LENGTH; i++) {
+      const cell = getWordleCell(rowIndex, i);
+      if (!cell) continue;
+      cell.style.setProperty('--flip-delay', `${i * 80}ms`);
+      cell.classList.remove('win-bounce');
+      void cell.offsetWidth;
+      cell.classList.add('win-bounce');
+    }
+  }
 
   // Navigation Guard / Exit Protection
   const exitGuardModal = document.getElementById('exit-guard-modal');
@@ -272,6 +547,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     showPlayerIdModal();
   });
 
+  const btnStartWordle = document.getElementById('btn-start-wordle');
+  if (btnStartWordle) {
+    btnStartWordle.addEventListener('click', () => {
+      game.playClick();
+      openWordleModal();
+    });
+  }
+
   document.getElementById('btn-load').addEventListener('click', () => {
     game.playClick();
     if (!currentPlayerId) {
@@ -284,6 +567,42 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-settings').addEventListener('click', () => {
     game.playClick();
     settingsOverlay.classList.remove('hidden');
+  });
+
+  const btnCloseWordle = document.getElementById('btn-close-wordle');
+  if (btnCloseWordle) {
+    btnCloseWordle.addEventListener('click', () => {
+      game.playClick();
+      closeWordleModal();
+    });
+  }
+
+  if (btnWordleRestart) {
+    btnWordleRestart.addEventListener('click', () => {
+      game.playClick();
+      resetWordleRound();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (!isWordleOverlayOpen()) return;
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleWordleKeyPress('ENTER');
+      return;
+    }
+
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      handleWordleKeyPress('BACKSPACE');
+      return;
+    }
+
+    if (/^[a-zA-Z]$/.test(e.key)) {
+      e.preventDefault();
+      handleWordleKeyPress(e.key.toUpperCase());
+    }
   });
 
   // Gallery button (in-game icon — btn-gallery-global only; btn-gallery does not exist in HTML)

@@ -1,0 +1,276 @@
+:root {
+    --wordle-bg: #090d16;
+    --wordle-panel: #0f1523;
+    --wordle-cell: #0a0f19;
+    --wordle-border: #353b46;
+    --wordle-text: #f8fafc;
+    --wordle-key-bg: #8b9097;
+    --wordle-key-text: #f8fafc;
+
+    --wordle-correct: #16a34a;
+    --wordle-present: #eab308;
+    --wordle-absent: #3f3f46;
+}
+
+.wordle-modal-content {
+    --wordle-tile: clamp(40px, 7.3vh, 62px);
+    --wordle-grid-gap: clamp(5px, 0.8vh, 8px);
+    --wordle-key-h: clamp(42px, 7.1vh, 56px);
+
+    width: min(96%, 860px);
+    max-height: min(96%, 690px);
+    padding: clamp(12px, 2.2vh, 22px) clamp(12px, 2vw, 24px);
+    gap: clamp(8px, 1.2vh, 14px);
+    background: radial-gradient(1200px 600px at 50% -10%, #16203a 0%, var(--wordle-panel) 45%, #0b101c 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--wordle-text);
+    overflow: hidden;
+}
+
+.wordle-modal-content .modal-title {
+    margin: 0;
+    padding-bottom: 8px;
+    font-size: clamp(1.35rem, 2.9vh, 1.9rem);
+    color: #e5edff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.wordle-help {
+    text-align: center;
+    margin: 0;
+    color: #cbd5e1;
+    font-weight: 700;
+    font-size: clamp(0.85rem, 1.9vh, 1rem);
+}
+
+.wordle-shell {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(8px, 1.4vh, 12px);
+}
+
+.wordle-board {
+    display: grid;
+    grid-template-columns: repeat(5, var(--wordle-tile));
+    grid-template-rows: repeat(6, var(--wordle-tile));
+    gap: var(--wordle-grid-gap);
+}
+
+.wordle-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--wordle-border);
+    border-radius: 4px;
+    background: var(--wordle-cell);
+    color: var(--wordle-text);
+    font-size: calc(var(--wordle-tile) * 0.48);
+    font-weight: 800;
+    text-transform: uppercase;
+    /* Xoá transition background để flip animation kiểm soát màu hoàn toàn */
+    transform-style: preserve-3d;
+    will-change: transform;
+}
+
+/* Flip: xoay xong rồi mới thấy màu - dùng animation-delay trên lớp màu */
+.wordle-cell.flip {
+    animation: wordle-flip 460ms ease forwards;
+    animation-delay: var(--flip-delay, 0ms);
+}
+
+/* Màu CHỈ hiện sau khi tile đã xoay đến điểm 90° (nửa flip) */
+.wordle-cell.correct {
+    background-color: var(--wordle-correct);
+    border-color: var(--wordle-correct);
+    color: #ffffff;
+}
+
+.wordle-cell.present {
+    background-color: var(--wordle-present);
+    border-color: var(--wordle-present);
+    color: #111827;
+}
+
+.wordle-cell.absent {
+    background-color: var(--wordle-absent);
+    border-color: var(--wordle-absent);
+    color: #ffffff;
+}
+
+.wordle-cell.draft {
+    border-color: #8b94a6;
+    background: #111827;
+}
+
+/* Bounce nhỏ khi gõ một chữ vào ô */
+.wordle-cell.pop {
+    animation: wordle-pop 100ms ease;
+}
+
+/* Shake cả hàng khi từ không hợp lệ */
+.wordle-row-shake {
+    animation: wordle-shake 500ms ease;
+}
+
+/* Win: tất cả tile nhảy lên */
+.wordle-cell.win-bounce {
+    animation: wordle-win-bounce 600ms ease forwards;
+    animation-delay: var(--flip-delay, 0ms);
+}
+
+.wordle-keyboard {
+    width: 100%;
+    max-width: min(100%, 620px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1vh, 10px);
+}
+
+.wordle-keyboard-row {
+    display: flex;
+    justify-content: center;
+    gap: clamp(4px, 0.7vh, 6px);
+}
+
+.wordle-key {
+    min-width: clamp(34px, 4.3vw, 46px);
+    height: var(--wordle-key-h);
+    border: none;
+    border-radius: 6px;
+    background: var(--wordle-key-bg);
+    color: var(--wordle-key-text);
+    font-size: clamp(1.35rem, 3.4vh, 1.75rem);
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 120ms ease, filter 180ms ease, background-color 200ms ease;
+}
+
+.wordle-key:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+}
+
+.wordle-key:active {
+    transform: translateY(0);
+}
+
+.wordle-key.wide {
+    min-width: clamp(72px, 9.4vw, 92px);
+    font-size: clamp(0.9rem, 1.8vh, 1.05rem);
+}
+
+.wordle-key.correct {
+    background: var(--wordle-correct);
+    color: #ffffff;
+    opacity: 1;
+}
+
+.wordle-key.present {
+    background: var(--wordle-present);
+    color: #111827;
+    opacity: 1;
+}
+
+.wordle-key.absent {
+    background: #2f3340;
+    color: #f8fafc;
+    opacity: 1;
+}
+
+.wordle-key.locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.wordle-key:disabled {
+    opacity: 1;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.wordle-message {
+    min-height: 22px;
+    margin: 2px 0 0;
+    text-align: center;
+    font-weight: 700;
+    color: #dbeafe;
+    font-size: clamp(0.85rem, 1.8vh, 1rem);
+}
+
+.wordle-footer-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 2px;
+}
+
+.wordle-footer-actions .modal-close-btn {
+    margin-top: 0;
+    padding: clamp(8px, 1.4vh, 11px) clamp(18px, 3.2vw, 34px);
+    font-size: clamp(0.9rem, 1.9vh, 1.03rem);
+}
+
+.wordle-restart-btn {
+    background: #1d4ed8;
+}
+
+@keyframes wordle-flip {
+    0%   { transform: rotateX(0deg); }
+    /* Đến 45%: xoay nghiêng dần - vẫn thấy mặt cũ */
+    45%  { transform: rotateX(90deg); }
+    /* 45-55%: ẩn hoàn toàn - JS thêm class màu ở đây */
+    55%  { transform: rotateX(90deg); }
+    /* 55-100%: mở ra - hiện màu mới */
+    100% { transform: rotateX(0deg); }
+}
+
+@keyframes wordle-pop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.12); }
+    100% { transform: scale(1); }
+}
+
+@keyframes wordle-shake {
+    0%,100% { transform: translateX(0); }
+    10%,50%,90% { transform: translateX(-6px); }
+    30%,70% { transform: translateX(6px); }
+}
+
+@keyframes wordle-win-bounce {
+    0%,20%  { transform: translateY(0); }
+    40%  { transform: translateY(-20px); }
+    60%  { transform: translateY(-12px); }
+    80%  { transform: translateY(-20px); }
+    100% { transform: translateY(0); }
+}
+
+@media (max-height: 760px) {
+    .wordle-modal-content {
+        --wordle-tile: clamp(36px, 6.1vh, 54px);
+        --wordle-grid-gap: clamp(4px, 0.7vh, 6px);
+        --wordle-key-h: clamp(38px, 5.9vh, 50px);
+        max-height: 97%;
+    }
+}
+
+@media (max-width: 520px) {
+    .wordle-modal-content {
+        --wordle-tile: clamp(35px, 6.2vh, 52px);
+        --wordle-grid-gap: clamp(4px, 0.6vh, 6px);
+        --wordle-key-h: clamp(38px, 5.7vh, 50px);
+        width: min(98%, 620px);
+        padding: 10px 10px 12px;
+    }
+
+    .wordle-key {
+        min-width: clamp(30px, 7.7vw, 40px);
+        border-radius: 5px;
+    }
+
+    .wordle-key.wide {
+        min-width: clamp(58px, 14.5vw, 74px);
+    }
+}

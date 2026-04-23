@@ -7,6 +7,7 @@
   <title>Time, Dreams, Trials & Us</title>
   <link rel="icon" type="image/png" href="/assets/logo/feg_logo.png" />
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/wordle.css">
   <!-- Google Fonts: Inter cho Text thông thường và Noto Serif cho Dialogue -->
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap"
@@ -39,6 +40,7 @@
         <p class="subtitle" data-i18n="title-subtitle">Đại Học Tôn Đức Thắng - Nơi Ước Mơ Bắt Đầu</p>
         <div class="menu-buttons">
           <button id="btn-start" class="menu-btn" data-i18n="btn-start">Bắt Đầu Mới</button>
+          <button id="btn-start-wordle" class="menu-btn">Bắt Đầu Chơi Wordle</button>
           <button id="btn-load" class="menu-btn" data-i18n="btn-load">Tiếp Tục</button>
           <button id="btn-settings" class="menu-btn" data-i18n="btn-settings">Cài Đặt</button>
         </div>
@@ -246,6 +248,26 @@
           <!-- Ảnh sẽ được load qua JS -->
         </div>
         <button id="btn-close-gallery" class="modal-close-btn" data-i18n="btn-close-global">Quay Lại</button>
+      </div>
+    </div>
+
+    <!-- Overlay: Wordle Mini Game -->
+    <div id="wordle-overlay" class="modal-overlay hidden">
+      <div class="modal-content wordle-modal-content">
+        <h2 class="modal-title">WORDLE CHALLENGE</h2>
+        <p class="wordle-help">Đoán từ tiếng Anh 5 chữ cái trong 6 lượt</p>
+
+        <div class="wordle-shell">
+          <div id="wordle-board" class="wordle-board" aria-label="Wordle board"></div>
+          <div id="wordle-keyboard" class="wordle-keyboard" aria-label="Wordle keyboard"></div>
+        </div>
+
+        <p id="wordle-message" class="wordle-message"></p>
+
+        <div class="wordle-footer-actions">
+          <button id="btn-wordle-restart" class="modal-close-btn wordle-restart-btn">Chơi Lại</button>
+          <button id="btn-close-wordle" class="modal-close-btn">Đóng</button>
+        </div>
       </div>
     </div>
 
