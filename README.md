@@ -125,4 +125,4 @@ Hệ thống nhạc trong game hiện tại hoạt động theo cơ chế **Scen
    ```
 
 ---
-*(Bản hướng dẫn này được cập nhật đầy đủ bởi Tanzel)
+*(Bản hướng dẫn này được cập nhật đầy đủ bởi Tanzel)*
