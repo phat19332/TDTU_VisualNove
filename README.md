@@ -125,5 +125,4 @@ Hệ thống nhạc trong game hiện tại hoạt động theo cơ chế **Scen
    ```
 
 ---
-*(Bản hướng dẫn này được cập nhật đầy đủ bởi Antigravity AI)*
-
+*(Bản hướng dẫn này được cập nhật đầy đủ bởi Tanzel)
