@@ -105,10 +105,13 @@ Game hỗ trợ hiển thị **2 nhân vật cùng lúc** (Trái và Phải).
 | **dialogue** | Lời thoại | **Bắt buộc**. Text thường hoặc JSON `{"vi": "Tiếng Việt", "en": "English"}`. |
 | **choices** | Các lựa chọn | Dùng định dạng JSON hoặc Viết tắt (Shorthand). |
 | **next_id** | Nhảy đến dòng | Điền `scene_id` của dòng tiếp theo. |
-| **sfx** | Hiệu ứng âm thanh | Tên file SFX (VD: `thunder.mp3`). BGM sẽ tự giảm nhỏ khi SFX phát. |
+| **sfx** | Hiệu ứng âm thanh | Tên file SFX (VD: `thunder.mp3`). Điền `stop` để dừng SFX đang phát. |
 | **sfx_volume** | Âm lượng SFX | Từ 0.0 đến 1.0 (mặc định: 1.0). |
+| **sfx_loop** | Lặp SFX | `true` để lặp liên tục (dùng cho ambient: mưa, gió). Mặc định: `false`. |
 
----
+> [!TIP]
+> **Cách dùng SFX**: SFX hoạt động giống BGM — tiếp tục phát qua các dòng thoại cho đến khi bạn ghi `sfx = "stop"` hoặc gán file SFX mới. Ví dụ: gán `sfx = "rain.mp3"` + `sfx_loop = true` ở dòng bắt đầu mưa, rồi gán `sfx = "stop"` ở dòng hết mưa.
+
 
 ## 2. Hệ thống Nâng cao cho Kịch bản
 

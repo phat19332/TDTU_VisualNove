@@ -76,10 +76,17 @@ export async function fetchScript() {
       }
 
       // Dual Character System (char_l ưu tiên hơn char_name)
-      if (row.char_l !== undefined) {
-        line.char_l = (row.char_l === '' || row.char_l === 'null') ? null : row.char_l;
+      // Nếu char_l có dữ liệu → dùng char_l. Nếu char_l trống mà char_name có → dùng char_name làm char_l
+      if (row.char_l !== null && row.char_l !== undefined && row.char_l !== '') {
+        line.char_l = (row.char_l === 'null') ? null : row.char_l;
+      } else if (row.char_name !== null && row.char_name !== undefined && row.char_name !== '') {
+        // Fallback: char_name → char_l (tương thích ngược)
+        line.char_l = (row.char_name === 'null') ? null : row.char_name;
+      } else if (row.char_l === null || row.char_name === null) {
+        // Người dùng gán null rõ ràng → ẩn nhân vật
+        line.char_l = null;
       }
-      if (row.char_r !== undefined) {
+      if (row.char_r !== null && row.char_r !== undefined) {
         line.char_r = (row.char_r === '' || row.char_r === 'null') ? null : row.char_r;
       }
       if (row.emotion_l)     line.emotion_l = row.emotion_l;
@@ -106,6 +113,17 @@ export async function fetchScript() {
       // Map additional state features
       if (row.bgm_lock !== undefined) line.bgm_lock = row.bgm_lock;
       if (row.cg_id !== undefined)   line.cg_id = row.cg_id;
+
+      // SFX (Sound Effects)
+      if (row.sfx !== null && row.sfx !== undefined) {
+        line.sfx = row.sfx;
+      }
+      if (row.sfx_volume !== null && row.sfx_volume !== undefined) {
+        line.sfx_volume = row.sfx_volume;
+      }
+      if (row.sfx_loop !== null && row.sfx_loop !== undefined) {
+        line.sfx_loop = row.sfx_loop;
+      }
 
       return line;
     });

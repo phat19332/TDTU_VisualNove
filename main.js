@@ -853,6 +853,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   elBgm.addEventListener('input', (e) => {
     document.getElementById('bgm-val').innerText = e.target.value;
     game.setVolume('bgm', e.target.value);
+    // Đồng bộ slider trong Music Player
+    const musicVol = document.getElementById('music-volume');
+    if (musicVol) musicVol.value = e.target.value;
   });
 
   elSfx.addEventListener('input', (e) => {
@@ -1202,12 +1205,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   musicProgressEl.addEventListener('mouseup', () => { isSeekingMusic = false; });
   musicProgressEl.addEventListener('touchend', () => { isSeekingMusic = false; });
 
-  // Volume
+  // Volume (đồng bộ với Settings BGM slider)
   musicVolumeEl.addEventListener('input', (e) => {
     e.stopPropagation();
-    const vol = e.target.value / 100;
-    game.bgmAudio.volume = vol;
-    game.bgmVolume = vol;
+    const val = parseInt(e.target.value);
+    game.setVolume('bgm', val);
+    // Đồng bộ slider BGM bên Settings
+    const elBgm = document.getElementById('bgm-volume');
+    if (elBgm) elBgm.value = val;
+    const bgmValLabel = document.getElementById('bgm-val');
+    if (bgmValLabel) bgmValLabel.innerText = val;
   });
 
   // BGM Change callback
