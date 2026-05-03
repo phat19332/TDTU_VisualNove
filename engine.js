@@ -372,17 +372,34 @@ export class VNEngine {
     this.ui.choicesOverlay.classList.add('hidden');
     this.ui.choicesOverlay.innerHTML = '';
     
-    // Xử lý lựa chọn: Chấp nhận cả JSON string, Array, hoặc Shorthand string (| và ;;)
+    // Xử lý lựa chọn: Chấp nhận cả JSON (Đa ngôn ngữ), Array, hoặc Shorthand string (| và ;;)
     let processedChoices = line.choices;
-    if (typeof processedChoices === 'string' && processedChoices.trim() !== '') {
+    
+    if (typeof processedChoices === 'object' && processedChoices !== null && !Array.isArray(processedChoices)) {
+      // JSON đa ngôn ngữ (VD: {"vi": "Đi|A", "en": "Go|A"})
+      let choiceString = processedChoices[this.currentLang] || processedChoices['vi'] || "";
+      if (choiceString.trim() !== '') {
+        processedChoices = choiceString.split(';;').map(choiceStr => {
+          const [text, next] = choiceStr.split('|');
+          return { text: text ? text.trim() : '', next: (next || '').trim() };
+        });
+      } else {
+        processedChoices = null;
+      }
+    } else if (typeof processedChoices === 'string' && processedChoices.trim() !== '') {
       try {
-        // Thử parse nếu là JSON
-        processedChoices = JSON.parse(processedChoices);
+        // Thử parse nếu là JSON (fallback phòng trường hợp string JSON chưa được parse)
+        let parsed = JSON.parse(processedChoices);
+        let choiceString = parsed[this.currentLang] || parsed['vi'] || "";
+        processedChoices = choiceString.split(';;').map(choiceStr => {
+          const [text, next] = choiceStr.split('|');
+          return { text: text ? text.trim() : '', next: (next || '').trim() };
+        });
       } catch (e) {
         // Nếu không phải JSON, hãy parse theo kiểu Shorthand (| và ;;)
         processedChoices = processedChoices.split(';;').map(choiceStr => {
           const [text, next] = choiceStr.split('|');
-          return { text: text.trim(), next: (next || '').trim() };
+          return { text: text ? text.trim() : '', next: (next || '').trim() };
         });
       }
     }
@@ -440,13 +457,28 @@ export class VNEngine {
     let finalChoices = choices;
     if (!finalChoices && line.choices) {
         finalChoices = line.choices;
-        if (typeof finalChoices === 'string' && finalChoices.trim() !== '') {
+        if (typeof finalChoices === 'object' && finalChoices !== null && !Array.isArray(finalChoices)) {
+            let choiceString = finalChoices[this.currentLang] || finalChoices['vi'] || "";
+            if (choiceString.trim() !== '') {
+                finalChoices = choiceString.split(';;').map(choiceStr => {
+                    const [cText, cNext] = choiceStr.split('|');
+                    return { text: cText ? cText.trim() : '', next: (cNext || '').trim() };
+                });
+            } else {
+                finalChoices = null;
+            }
+        } else if (typeof finalChoices === 'string' && finalChoices.trim() !== '') {
             try {
-                finalChoices = JSON.parse(finalChoices);
+                let parsed = JSON.parse(finalChoices);
+                let choiceString = parsed[this.currentLang] || parsed['vi'] || "";
+                finalChoices = choiceString.split(';;').map(choiceStr => {
+                    const [cText, cNext] = choiceStr.split('|');
+                    return { text: cText ? cText.trim() : '', next: (cNext || '').trim() };
+                });
             } catch (e) {
                 finalChoices = finalChoices.split(';;').map(choiceStr => {
                     const [cText, cNext] = choiceStr.split('|');
-                    return { text: cText.trim(), next: (cNext || '').trim() };
+                    return { text: cText ? cText.trim() : '', next: (cNext || '').trim() };
                 });
             }
         }

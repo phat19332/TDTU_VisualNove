@@ -100,12 +100,19 @@ export async function fetchScript() {
       line.text = row.dialogue || '';
       line.dialogue = row.dialogue || '';
 
-      // Parse choices: Format "Text1|id1;;Text2|id2"
+      // Parse choices: Hỗ trợ cả Shorthand và JSON (Đa ngôn ngữ)
       if (row.choices && row.choices.trim() !== '') {
-        line.choices = row.choices.split(';;').map(c => {
-          const [text, next] = c.split('|');
-          return { text: text.trim(), next: next.trim() };
-        });
+        try {
+          const parsedChoices = JSON.parse(row.choices);
+          // Nếu là JSON hợp lệ (VD: {"vi": "...", "en": "..."}), giữ nguyên dạng object
+          line.choices = parsedChoices;
+        } catch (e) {
+          // Nếu không phải JSON, parse theo kiểu Shorthand (Text|id)
+          line.choices = row.choices.split(';;').map(c => {
+            const [text, next] = c.split('|');
+            return { text: text ? text.trim() : '', next: next ? next.trim() : '' };
+          });
+        }
       }
 
       if (row.next_id) line.next = row.next_id;
