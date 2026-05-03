@@ -40,7 +40,7 @@
         <p class="subtitle" data-i18n="title-subtitle">Đại Học Tôn Đức Thắng - Nơi Ước Mơ Bắt Đầu</p>
         <div class="menu-buttons">
           <button id="btn-start" class="menu-btn" data-i18n="btn-start">Bắt Đầu Mới</button>
-          <button id="btn-start-wordle" class="menu-btn">Bắt Đầu Chơi Wordle</button>
+          <button id="btn-minigames-hub" class="menu-btn" data-i18n="btn-minigames">🎮 Trung Tâm Giải Trí</button>
           <button id="btn-load" class="menu-btn" data-i18n="btn-load">Tiếp Tục</button>
           <button id="btn-settings" class="menu-btn" data-i18n="btn-settings">Cài Đặt</button>
         </div>
@@ -268,6 +268,38 @@
           <button id="btn-wordle-restart" class="modal-close-btn wordle-restart-btn">Chơi Lại</button>
           <button id="btn-close-wordle" class="modal-close-btn">Đóng</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Overlay: Minigame Hub -->
+    <div id="minigames-overlay" class="modal-overlay hidden">
+      <div class="modal-content minigames-hub-content">
+        <h2 class="modal-title" data-i18n="hub-title">🎮 Trung Tâm Giải Trí</h2>
+        <p class="hub-subtitle" data-i18n="hub-subtitle">Chọn một trò chơi để thử thách bản thân!</p>
+        <div class="minigame-grid">
+
+          <!-- Card: Wordle -->
+          <div class="game-card" id="card-wordle">
+            <div class="game-card-icon">🔤</div>
+            <div class="game-card-body">
+              <h3 class="game-card-title">Wordle Challenge</h3>
+              <p class="game-card-desc" data-i18n="hub-wordle-desc">Đoán từ tiếng Anh 5 chữ cái trong 6 lượt</p>
+            </div>
+            <div class="game-card-badge" data-i18n="hub-badge-classic">Cổ điển</div>
+          </div>
+
+          <!-- Card: Rhythm -->
+          <div class="game-card" id="card-rhythm">
+            <div class="game-card-icon">🎵</div>
+            <div class="game-card-body">
+              <h3 class="game-card-title">Rhythm Battle</h3>
+              <p class="game-card-desc" data-i18n="hub-rhythm-desc">Đấu nhạc nhịp điệu phong cách FNF</p>
+            </div>
+            <div class="game-card-badge badge-new" data-i18n="hub-badge-new">MỚI</div>
+          </div>
+
+        </div>
+        <button id="btn-close-hub" class="modal-close-btn" data-i18n="btn-close-global">Đóng</button>
       </div>
     </div>
 

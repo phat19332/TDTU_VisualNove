@@ -1432,3 +1432,145 @@ body {
   transform: scale(1.1);
   background: rgba(10, 69, 149, 0.8);
 }
+
+/* ============================================ */
+/* MINIGAME HUB - Trung Tâm Giải Trí           */
+/* ============================================ */
+
+.minigames-hub-content {
+  max-width: 700px;
+  width: 90%;
+  background: linear-gradient(160deg, #0f172a 0%, #1e293b 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+}
+
+.minigames-hub-content .modal-title {
+  color: #f1f5f9;
+  border-bottom-color: rgba(255, 255, 255, 0.15);
+  font-size: 2.2rem;
+  text-shadow: 0 2px 10px rgba(251, 191, 36, 0.3);
+}
+
+.hub-subtitle {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 1rem;
+  margin-top: -10px;
+}
+
+.minigame-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+  padding: 10px 0;
+}
+
+.game-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.game-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(10, 69, 149, 0.15), rgba(227, 24, 55, 0.1));
+  opacity: 0;
+  transition: opacity 0.3s;
+  border-radius: 16px;
+}
+
+.game-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 12px 40px rgba(10, 69, 149, 0.35),
+    0 0 0 1px rgba(96, 165, 250, 0.2);
+}
+
+.game-card:hover::before {
+  opacity: 1;
+}
+
+.game-card:active {
+  transform: translateY(-2px) scale(0.98);
+}
+
+.game-card-icon {
+  font-size: 3rem;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  transition: transform 0.3s ease;
+}
+
+.game-card:hover .game-card-icon {
+  transform: scale(1.15) rotate(-5deg);
+}
+
+.game-card-body {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.game-card-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.game-card-desc {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.game-card-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(100, 116, 139, 0.5);
+  color: #cbd5e1;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  z-index: 1;
+}
+
+.game-card-badge.badge-new {
+  background: linear-gradient(135deg, #ef4444, #ec4899);
+  color: white;
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4);
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.05); }
+}
+
+/* Hub responsive */
+@media (max-width: 600px) {
+  .minigame-grid {
+    grid-template-columns: 1fr;
+  }
+}

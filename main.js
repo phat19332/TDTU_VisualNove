@@ -165,6 +165,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const settingsOverlay = document.getElementById('settings-overlay');
   const playerIdOverlay = document.getElementById('player-id-overlay');
   const wordleOverlay = document.getElementById('wordle-overlay');
+  const minigamesOverlay = document.getElementById('minigames-overlay');
 
   // --- Wordle Mini Game ---
   const WORDLE_LENGTH = 5;
@@ -547,11 +548,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     showPlayerIdModal();
   });
 
-  const btnStartWordle = document.getElementById('btn-start-wordle');
-  if (btnStartWordle) {
-    btnStartWordle.addEventListener('click', () => {
+  // --- Minigame Hub ---
+  const btnMinigamesHub = document.getElementById('btn-minigames-hub');
+  if (btnMinigamesHub) {
+    btnMinigamesHub.addEventListener('click', () => {
       game.playClick();
-      openWordleModal();
+      if (minigamesOverlay) minigamesOverlay.classList.remove('hidden');
+    });
+  }
+
+  const btnCloseHub = document.getElementById('btn-close-hub');
+  if (btnCloseHub) {
+    btnCloseHub.addEventListener('click', () => {
+      game.playClick();
+      if (minigamesOverlay) minigamesOverlay.classList.add('hidden');
     });
   }
 
@@ -615,38 +625,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // --- Khởi tạo Rhythm Game (Test Mode) ---
+  // --- Khởi tạo Rhythm Game ---
   const rhythmGame = new RhythmGame('rhythm-overlay', 'rhythm-canvas');
-  const testRhythmBtn = document.createElement('button');
-  testRhythmBtn.className = 'menu-btn';
-  testRhythmBtn.style.background = 'linear-gradient(90deg, #9333ea, #ec4899)';
-  testRhythmBtn.setAttribute('data-i18n', 'btn-test-rhythm');
-  testRhythmBtn.textContent = (I18N_DICT[initialLang] && I18N_DICT[initialLang]['btn-test-rhythm']) ? I18N_DICT[initialLang]['btn-test-rhythm'] : '🎶 Test Nhịp Điệu (MỚI)';
-  testRhythmBtn.onclick = () => {
+
+  function startRhythmGame() {
     game.playClick();
+    if (minigamesOverlay) minigamesOverlay.classList.add('hidden');
     rhythmGame.setVolume(game.bgmVolume, game.sfxVolume);
 
-    // Tạo Mock Beatmap: 0-3 là CPU, 4-7 là Player
-    // Thể hiện luân phiên lượt hát để biểu diễn Camera Zoom
-    // Fetch bản đồ 120 giây (beatmap_test.json)
     fetch('/beatmap_test.json')
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
       .then(beatmapData => {
-        // Gọi game, truyền tạm background âm thanh của logo studio
-        // Bạn có thể chuẩn bị một file âm thanh ngắn (ví dụ: 'hit_sound.mp3') và truyền vào thay chỗ của 'null' bên dưới
         window.rhythmGameRef = rhythmGame;
         rhythmGame.start(beatmapData, 'studio_intro.mp3', null, async (result) => {
-          if (result.silent) return; // Nếu bị ngắt bởi Quit thủ công thì không hiện Alert
+          if (result.silent) return;
 
-          // Đánh dấu game có dữ liệu mới để bảo vệ Navigation
           game.isDirty = true;
 
           alert(result.victory ? `Win! Bạn đạt được: ${result.score} Điểm\nMax Combo: ${result.maxCombo}` : `Game Over! Nhóc Trùm đã đánh bại bạn.\nĐiểm: ${result.score}`);
 
-          // Lưu Highscore vào storage (mô phỏng)
           const currentRhythmHighscore = parseInt(localStorage.getItem('tdtu_rhythm_highscore') || '0');
           if (result.score > currentRhythmHighscore) {
             localStorage.setItem('tdtu_rhythm_highscore', result.score);
@@ -660,10 +660,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error("Không tìm thấy file beatmap_test.json", err);
         alert("Lỗi tải Beatmap rùi!");
       });
-  };
-  const menuButtons = document.querySelector('.menu-buttons');
-  if (menuButtons) {
-    menuButtons.appendChild(testRhythmBtn);
+  }
+
+  // --- Hub: Card event listeners ---
+  const cardWordle = document.getElementById('card-wordle');
+  if (cardWordle) {
+    cardWordle.addEventListener('click', () => {
+      game.playClick();
+      if (minigamesOverlay) minigamesOverlay.classList.add('hidden');
+      openWordleModal();
+    });
+  }
+
+  const cardRhythm = document.getElementById('card-rhythm');
+  if (cardRhythm) {
+    cardRhythm.addEventListener('click', () => {
+      startRhythmGame();
+    });
   }
 
   // --- Quick Menu Màn Hình Game ---

@@ -54,7 +54,14 @@ export const I18N_DICT = {
     "narrator": "Dẫn chuyện",
     "speed-normal": "Bình thường",
     "btn-test-rhythm": "🎶 Test Nhịp Điệu (MỚI)",
-    "btn-rhythm-quit": "Bỏ cuộc (Thoát)"
+    "btn-rhythm-quit": "Bỏ cuộc (Thoát)",
+    "btn-minigames": "🎮 Trung Tâm Giải Trí",
+    "hub-title": "🎮 Trung Tâm Giải Trí",
+    "hub-subtitle": "Chọn một trò chơi để thử thách bản thân!",
+    "hub-wordle-desc": "Đoán từ tiếng Anh 5 chữ cái trong 6 lượt",
+    "hub-rhythm-desc": "Đấu nhạc nhịp điệu phong cách FNF",
+    "hub-badge-classic": "Cổ điển",
+    "hub-badge-new": "MỚI"
   },
   en: {
     "btn-start": "New Game",
@@ -111,6 +118,13 @@ export const I18N_DICT = {
     "narrator": "Narrator",
     "speed-normal": "Normal",
     "btn-test-rhythm": "🎶 Rhythm Test (NEW)",
-    "btn-rhythm-quit": "Give up (Quit)"
+    "btn-rhythm-quit": "Give up (Quit)",
+    "btn-minigames": "🎮 Entertainment Hub",
+    "hub-title": "🎮 Entertainment Hub",
+    "hub-subtitle": "Pick a game to challenge yourself!",
+    "hub-wordle-desc": "Guess the 5-letter English word in 6 tries",
+    "hub-rhythm-desc": "FNF-style rhythm music battle",
+    "hub-badge-classic": "Classic",
+    "hub-badge-new": "NEW"
   }
 };

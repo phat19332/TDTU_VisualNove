@@ -33,6 +33,13 @@ export class VNEngine {
     this.bgmAudio = new Audio();
     this.bgmAudio.loop = true;
     this.sfxClick = new Audio(getAssetUrl('click.mp3'));
+
+    // Scene SFX (Sound Effects theo kịch bản)
+    this.currentSceneSfx = null;
+    this._duckingTimer = null;
+    this._preDuckVolume = null; // Lưu volume trước khi duck
+    this.DUCK_LEVEL = 0.15; // Giảm BGM xuống 15% khi SFX đang phát
+    this.DUCK_FADE_MS = 300; // Thời gian fade mượt (ms)
     
     // BGM tracking for Music Player UI
     this.currentBgmUrl = null;
@@ -155,6 +162,7 @@ export class VNEngine {
     this.isAutoMode = false;
     this.isSkipMode = false;
     this.syncModeUI();
+    this.stopCurrentSfx(); // Dọn dẹp SFX trước khi thoát
     this.ui.gameScreen.classList.remove('active');
     this.ui.titleScreen.classList.add('active');
     // Báo sự kiện ra màn hình ngoài (nếu có modal sẽ nằm bên main.js)
@@ -225,6 +233,14 @@ export class VNEngine {
       // Xử lý Khóa nhạc (BGM Lock)
       const isLocked = !!line.bgm_lock;
       if (this.onBgmLockChange) this.onBgmLockChange(isLocked);
+    }
+
+    // Xử lý Sound Effect (SFX) với Ducking
+    if (line.sfx) {
+      this.playSfx(line.sfx, line.sfx_volume);
+    } else {
+      // Không có SFX ở dòng này → dọn dẹp SFX cũ nếu còn
+      this.stopCurrentSfx();
     }
 
     // ===================================================
@@ -521,5 +537,88 @@ export class VNEngine {
 
   getLog() {
       return this.logHistory;
+  }
+
+  // ===================================================
+  // SFX & DUCKING SYSTEM
+  // ===================================================
+
+  /**
+   * Dừng SFX hiện tại (nếu có) và khôi phục volume BGM.
+   */
+  stopCurrentSfx() {
+    clearTimeout(this._duckingTimer);
+    if (this.currentSceneSfx) {
+      this.currentSceneSfx.pause();
+      this.currentSceneSfx.removeAttribute('src');
+      this.currentSceneSfx = null;
+    }
+    // Khôi phục volume BGM nếu đang bị duck
+    if (this._preDuckVolume !== null) {
+      this._smoothVolume(this.bgmAudio, this._preDuckVolume, this.DUCK_FADE_MS);
+      this._preDuckVolume = null;
+    }
+  }
+
+  /**
+   * Phát SFX với cơ chế Ducking:
+   * - Giảm BGM mượt xuống DUCK_LEVEL
+   * - Phát SFX
+   * - Khi SFX xong, khôi phục BGM mượt lên lại
+   */
+  playSfx(sfxFile, sfxVolume = 1.0) {
+    // Dọn dẹp SFX cũ trước
+    this.stopCurrentSfx();
+
+    const sfxUrl = getAssetUrl(sfxFile);
+    const sfx = new Audio(sfxUrl);
+    sfx.volume = Math.min(1.0, Math.max(0, sfxVolume)) * this.sfxVolume;
+    this.currentSceneSfx = sfx;
+
+    // Lưu volume hiện tại của BGM trước khi duck
+    this._preDuckVolume = this.bgmAudio.volume;
+    const targetDuck = this.bgmVolume * this.DUCK_LEVEL;
+
+    // Duck: giảm BGM mượt
+    this._smoothVolume(this.bgmAudio, targetDuck, this.DUCK_FADE_MS);
+
+    // Phát SFX
+    const playPromise = sfx.play();
+    if (playPromise) {
+      playPromise.catch(e => console.warn('SFX play blocked:', e));
+    }
+
+    // Khi SFX kết thúc, khôi phục BGM
+    sfx.addEventListener('ended', () => {
+      if (this.currentSceneSfx === sfx) {
+        const restoreTo = this._preDuckVolume !== null ? this._preDuckVolume : this.bgmVolume;
+        this._smoothVolume(this.bgmAudio, restoreTo, this.DUCK_FADE_MS);
+        this._preDuckVolume = null;
+        this.currentSceneSfx = null;
+      }
+    });
+  }
+
+  /**
+   * Chuyển volume mượt (linear interpolation) cho một Audio element.
+   */
+  _smoothVolume(audio, targetVol, durationMs) {
+    clearTimeout(this._duckingTimer);
+    const steps = 15;
+    const stepMs = durationMs / steps;
+    const startVol = audio.volume;
+    const delta = targetVol - startVol;
+    let step = 0;
+
+    const tick = () => {
+      step++;
+      if (step >= steps) {
+        audio.volume = Math.max(0, Math.min(1, targetVol));
+        return;
+      }
+      audio.volume = Math.max(0, Math.min(1, startVol + (delta * step / steps)));
+      this._duckingTimer = setTimeout(tick, stepMs);
+    };
+    tick();
   }
 }
