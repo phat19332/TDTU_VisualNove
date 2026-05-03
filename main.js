@@ -960,8 +960,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Danh sách các bộ ảnh đặc biệt (Bạn có thể thêm bớt ở đây)
   const CG_GALLERY = [
-    { id: 'opening_gate', title: 'Cổng Trường TDTU', url: 'tdtu_gate.png' },
-    { id: 'hao_nhien_surprised', title: 'Hạo Nhiên Ngạc Nhiên', url: 'hao_nhien_surprised.png' },
+    { id: 'opening_gate', title: 'Cổng Trường TDTU', url: 'gate.png' },
+    { id: 'Minh.png', title: 'Minh', url: 'Minh.png' },
     { id: 'demo_end', title: 'Hoàn Thành Demo', url: 'poster.png' }
   ];
 
