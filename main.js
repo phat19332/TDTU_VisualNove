@@ -579,6 +579,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     settingsOverlay.classList.remove('hidden');
   });
 
+  const btnGallery = document.getElementById('btn-gallery');
+  if (btnGallery) {
+    btnGallery.addEventListener('click', () => {
+      game.playClick();
+      // Placeholder for gallery
+      if (typeof openGallery === 'function') {
+        openGallery();
+      } else {
+        alert("Tính năng Gallery đang được phát triển!");
+      }
+    });
+  }
+
+  const btnQuitMain = document.getElementById('btn-quit-main');
+  if (btnQuitMain) {
+    btnQuitMain.addEventListener('click', () => {
+      game.playClick();
+      if (confirm("Bạn có chắc chắn muốn thoát game?")) {
+        // Cố gắng đóng cửa sổ (chỉ hoạt động nếu được mở bởi script)
+        window.close();
+        // Fallback
+        alert("Cảm ơn bạn đã chơi TDTU: Ordinary Days!");
+      }
+    });
+  }
+
   const btnCloseWordle = document.getElementById('btn-close-wordle');
   if (btnCloseWordle) {
     btnCloseWordle.addEventListener('click', () => {

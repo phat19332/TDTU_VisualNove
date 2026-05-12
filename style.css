@@ -7,7 +7,7 @@
   --glass-border: rgba(255, 255, 255, 0.5);
   --ui-shadow: 0 8px 32px 0 rgba(10, 69, 149, 0.15);
 
-  --font-ui: 'Inter', sans-serif;
+  --font-ui: 'Be Vietnam Pro', sans-serif;
   --font-dialogue: 'Noto Serif', serif;
 }
 
@@ -201,10 +201,11 @@ body {
 
 /* Màn Hình Tiêu Đề -------------------- */
 #title-screen {
-  /* Dùng hình ảnh làm hình nền chính */
-  background-image: url('/assets/backgrounds/tdtu_gate.png');
+  background-image: url('/assets/backgrounds/gate2.png');
   background-size: cover;
   background-position: center;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 #title-screen::after {
@@ -214,7 +215,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.7) 100%);
+  background: rgba(255, 255, 255, 0.05);
   z-index: 1;
 }
 
@@ -224,24 +225,140 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  /* Center vertically */
   align-items: center;
+  /* Center horizontally */
   height: 100%;
-  padding-bottom: 50px;
+  padding: 40px 0;
+  gap: 30px;
+  /* Consistent gap between blocks */
 }
 
-.game-logo {
-  font-size: 3.5rem;
-  color: var(--tdt-blue);
-  text-shadow: 2px 2px 0px #fff, -2px -2px 0px #fff, 2px -2px 0px #fff, -2px 2px 0px #fff, 0 4px 15px rgba(0, 0, 0, 0.1);
-  margin-bottom: 10px;
+/* --- Logo Anime-Game Style --- */
+.game-logo-block {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.game-logo-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  text-align: center;
+}
+
+/* Shared base for both lines */
+.logo-line-1,
+.logo-line-2 {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-weight: 900;
+  font-style: italic;
+  display: block;
+}
+
+/* "TDTU:" — RED fill, white stroke, RED 3D extrusion */
+.logo-line-1 {
+  color: #E31837;
+  font-size: 4.2rem;
+  letter-spacing: 4px;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 2.5px #FFFFFF;
+  text-shadow:
+    -1px -1px 0 #FFF, 1px -1px 0 #FFF, -1px 1px 0 #FFF, 1px 1px 0 #FFF,
+    1px 1px 0 #A81426, 2px 2px 0 #A81426, 3px 3px 0 #A81426, 4px 4px 0 #A81426,
+    5px 5px 0 #8B1020, 6px 6px 0 #8B1020,
+    0 8px 12px rgba(0, 0, 0, 0.35);
+}
+
+/* "Ordinary Days" — NAVY fill, white stroke, NAVY 3D extrusion */
+.logo-line-2 {
+  color: #0A1F5C;
+  font-size: 3.8rem;
+  letter-spacing: 0;
+  margin-top: -4px;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 2px #FFFFFF;
+  text-shadow:
+    -1px -1px 0 #FFF, 1px -1px 0 #FFF, -1px 1px 0 #FFF, 1px 1px 0 #FFF,
+    1px 1px 0 #071338, 2px 2px 0 #071338, 3px 3px 0 #071338, 4px 4px 0 #071338,
+    5px 5px 0 #050e28, 6px 6px 0 #050e28,
+    0 8px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Subtitle under logo */
+.logo-subtitle {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  letter-spacing: 1px;
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* Băng rôn góc phải */
+.title-ribbon {
+  position: absolute;
+  top: 20px;
+  right: -50px;
+  background: linear-gradient(to right, #0A4595, #1E88E5);
+  color: white;
+  padding: 10px 100px;
+  transform: rotate(15deg);
   font-weight: 800;
-  letter-spacing: -1px;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Bảng hiệu góc dưới phải (QS 5 STARS) */
+.tdtu-signboard {
+  position: absolute;
+  bottom: 25px;
+  right: 25px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 12px 20px;
+  border-radius: 4px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  z-index: 5;
+  border-left: 5px solid #C62828;
+  /* Accent border */
+  backdrop-filter: blur(5px);
+}
+
+.sign-red {
+  color: #C62828;
+  font-weight: 800;
+  font-size: 1.1rem;
+  margin-bottom: 2px;
+}
+
+.sign-blue {
+  color: #0A4595;
+  font-weight: 700;
+  font-size: 0.8rem;
+  margin-bottom: 10px;
+}
+
+.sign-footer {
+  display: flex;
+  justify-content: space-around;
+  font-size: 0.6rem;
+  color: #666;
+  font-weight: 600;
+  gap: 15px;
 }
 
 /* --- MÀN HÌNH STUDIO (FEG LOGO) --- */
 #studio-screen {
   background-color: #ffffff;
-  /* Nền trắng hợp với logo FEG */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -251,7 +368,6 @@ body {
 .studio-logo {
   max-width: 350px;
   width: 80%;
-  /* Responsive */
   opacity: 0;
   transform: scale(0.8) translateY(20px);
   animation: studioFadeInScale 3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
@@ -284,46 +400,58 @@ body {
   }
 }
 
-.subtitle {
-  font-size: 1.2rem;
-  color: var(--tdt-red);
-  font-weight: 600;
-  text-shadow: 1px 1px 0px #fff;
-  margin-bottom: 50px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-
 .menu-buttons {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
 }
 
 .menu-btn {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  padding: 15px 50px;
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: var(--tdt-blue);
-  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  padding: 11px 45px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0A4595;
+  border-radius: 50px;
   cursor: pointer;
-  box-shadow: var(--ui-shadow);
-  transition: all 0.2s ease;
-  min-width: 250px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+  transition: all 0.25s ease;
+  min-width: 280px;
   -webkit-tap-highlight-color: transparent;
-  /* Fix blue highlight mobile */
   user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  backdrop-filter: blur(4px);
 }
 
 .menu-btn:hover {
-  transform: translateY(-3px);
-  background: var(--tdt-blue);
-  color: white;
-  box-shadow: 0 10px 20px rgba(10, 69, 149, 0.3);
+  transform: translateY(-2px);
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(10, 69, 149, 0.2);
+  color: #E31837;
+}
+
+.menu-btn:active {
+  transform: scale(0.97) translateY(0);
+}
+
+/* Footer credit line */
+.title-footer {
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 /* Giao diện Trong Game ---------------- */
@@ -740,8 +868,15 @@ body {
 
 /* Player ID */
 .player-id-content {
-  max-width: 450px;
+  max-width: 550px;
+  /* Increased to prevent title wrapping */
   text-align: center;
+}
+
+.player-id-content .modal-title {
+  white-space: nowrap;
+  font-size: 1.8rem;
+  /* Slightly smaller to fit better */
 }
 
 .player-id-input {
@@ -1564,8 +1699,17 @@ body {
 }
 
 @keyframes badgePulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.05); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
 }
 
 /* Hub responsive */
