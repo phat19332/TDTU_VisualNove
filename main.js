@@ -5,6 +5,7 @@ import { initSupabase, fetchScript, fetchMusic, saveGame, loadGame, getAllSaves,
 import { RhythmGame } from './rhythm.js';
 import { I18N_DICT } from './i18n.js';
 import { WordleGame, renderWordleRow, getRandomWord } from './wordle.js';
+import { ListeningGame } from './listening.js';
 
 // Trạng thái Player
 let currentPlayerId = null;
@@ -653,6 +654,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- Khởi tạo Rhythm Game ---
   const rhythmGame = new RhythmGame('rhythm-overlay', 'rhythm-canvas');
+  const listeningGame = new ListeningGame();
+
+  // Phase 2 – BGM integration: pause VN BGM while Listening plays, restore on stop
+  listeningGame.onStart = () => {
+    if (game.bgmAudio && !game.bgmAudio.paused) {
+      game.bgmAudio.pause();
+      listeningGame._bgmWasPlaying = true;
+    } else {
+      listeningGame._bgmWasPlaying = false;
+    }
+  };
+  listeningGame.onStop = () => {
+    if (listeningGame._bgmWasPlaying && game.bgmAudio) {
+      game.bgmAudio.play().catch(() => {});
+    }
+    listeningGame._bgmWasPlaying = false;
+  };
 
   function startRhythmGame() {
     game.playClick();
@@ -702,6 +720,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (cardRhythm) {
     cardRhythm.addEventListener('click', () => {
       startRhythmGame();
+    });
+  }
+
+  const cardListening = document.getElementById('card-listening');
+  if (cardListening) {
+    cardListening.addEventListener('click', () => {
+      game.playClick();
+      if (minigamesOverlay) minigamesOverlay.classList.add('hidden');
+      listeningGame.start('hello-vietnam');
     });
   }
 

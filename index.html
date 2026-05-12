@@ -8,6 +8,7 @@
   <link rel="icon" type="image/png" href="/assets/logo/feg_logo.png" />
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/wordle.css">
+  <link rel="stylesheet" href="/listening.css">
   <!-- Google Fonts: Inter cho Text thông thường và Noto Serif cho Dialogue -->
     <link
     href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800;900&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap"
@@ -307,6 +308,15 @@
             </div>
             <div class="game-card-badge badge-new" data-i18n="hub-badge-new">MỚI</div>
           </div>
+          <!-- Card: Listening -->
+          <div class="game-card" id="card-listening">
+            <div class="game-card-icon">🎧</div>
+            <div class="game-card-body">
+              <h3 class="game-card-title">Music Listening</h3>
+              <p class="game-card-desc" data-i18n="hub-listening-desc">Nghe nhạc và hoàn thiện lời bài hát còn thiếu</p>
+            </div>
+            <div class="game-card-badge badge-new" data-i18n="hub-badge-new">MỚI</div>
+          </div>
 
         </div>
         <button id="btn-close-hub" class="modal-close-btn" data-i18n="btn-close-global">Đóng</button>
@@ -414,6 +424,50 @@
             data-i18n="guard-quit">Vẫn Thoát (Không Lưu)</button>
           <button id="btn-guard-cancel" class="diff-btn" style="background: #475569; color: #f8fafc; font-size: 1.2rem;"
             data-i18n="guard-cancel">Hủy Bỏ (Quay Lại Màn Chơi)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay: Listening Game -->
+    <div id="listening-overlay" class="modal-overlay hidden">
+      <div class="listening-container">
+        <div class="listening-header">
+          <div class="song-info-header">
+            <img id="listening-song-cover" src="/assets/logo/feg_logo.png" class="song-cover-small">
+            <div class="song-meta">
+              <h2 id="listening-song-title">Song Title</h2>
+              <p id="listening-song-artist">Artist Name</p>
+            </div>
+          </div>
+          <button id="btn-close-listening" class="modal-close-btn" style="margin-top: 0; background: #ef4444;">✕ Thoát</button>
+        </div>
+
+        <!-- Instruction Panel (shown before game starts) -->
+        <div id="listening-instructions" class="listening-instructions-panel">
+          <h3 class="instructions-title" style="margin-top: 0; margin-bottom: 20px;">Hướng Dẫn Cách Chơi</h3>
+          <ul class="instructions-list">
+            <li>🎧 Bài hát sẽ được phát <strong>tự động một lần duy nhất</strong> khi bạn bắt đầu.</li>
+            <li>✍️ Hãy <strong>tập trung lắng nghe</strong> và điền từ còn thiếu vào ô trống trong lời bài hát.</li>
+            <li>⏎ Nhấn <strong>Enter</strong> hoặc <strong>Tab</strong> ra ô kế để kiểm tra đáp án ngay lập tức.</li>
+            <li>⏹ Nếu bạn nhấn <strong>"Nghe lại từ đầu"</strong>, bài hát sẽ phát lại từ đầu — nhưng chỉ được <strong>1 lần</strong>.</li>
+            <li>🚫 Bạn <strong>không thể tua</strong> hay tạm dừng bài hát trong khi đang phát.</li>
+            <li>🏆 Điểm số tính theo số ô trống điền <strong>đúng chính xác</strong>.</li>
+          </ul>
+          <button id="btn-listening-begin" class="listening-begin-btn">🎵 Bắt Đầu Nghe</button>
+        </div>
+
+        <div class="lyrics-viewport">
+          <!-- Lyrics lines will be rendered here -->
+        </div>
+
+        <div class="listening-footer">
+          <div class="progress-container">
+            <span id="listening-time" class="music-time">0:00 / 0:00</span>
+            <input type="range" id="listening-progress" value="0" min="0" max="100" style="pointer-events:none;cursor:default;">
+          </div>
+          <div class="playback-controls">
+            <button id="btn-listening-play" class="listening-stop-btn" disabled>⏹ Nghe lại từ đầu</button>
+          </div>
         </div>
       </div>
     </div>
