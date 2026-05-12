@@ -12,6 +12,7 @@ Chào mừng bạn đến với **Time, Dreams, Trials & Us**, một dự án Vi
 - 🎮 **Mini-games Tích Hợp**: 
   - **Wordle Challenge**: Giải đố tiếng Anh phong cách Wordle.
   - **Rhythm Game**: Game âm nhạc nhịp điệu phong cách FNF với 4 độ khó, thanh máu Tug-of-war.
+  - **Music Listening**: Thử thách khả năng nghe tiếng Anh qua bài hát (Cloze Test) với hệ thống đồng bộ lời bài hát thời gian thực.
 
 ## 🛠️ Công nghệ sử dụng (Tech Stack)
 
@@ -30,6 +31,9 @@ Chào mừng bạn đến với **Time, Dreams, Trials & Us**, một dự án Vi
 ├── engine.js         # Core Engine (Text rendering, Choices, Save/Load)
 ├── rhythm.js         # Logic cho Rhythm Minigame
 ├── wordle.js         # Logic cho Wordle Minigame
+├── listening.js      # Logic cho Music Listening Minigame
+├── listeningData.js  # Dữ liệu bài hát, lyrics và timestamps cho Listening
+├── listening.css     # Giao diện riêng cho module Listening
 ├── i18n.js           # Trình quản lý Đa ngôn ngữ (Vietnamese/English)
 ├── supabase.js       # Kết nối và thao tác với Supabase
 ├── gameData.js       # Quản lý Data, States, biến số toàn cục
@@ -173,6 +177,24 @@ Hệ thống nhạc hoạt động theo cơ chế **Scene-Driven**:
 
 ### Khóa Nhạc (Fixed Mood)
 Dùng cột **`bgm_lock` = `true`** trong `scripts`. Trình phát nhạc sẽ hiện 🔒 và chặn người chơi đổi nhạc, giữ nguyên cảm xúc cho cảnh quan trọng. Chế độ Playlist cũng có thể được bật từ Player.
+
+---
+
+## 🎧 Hệ thống Music Listening Minigame
+
+Module này giúp người chơi luyện kỹ năng nghe chi tiết thông qua các bài hát (Cloze Test).
+
+### 🕹️ Cách chơi (Gameplay)
+- **Cơ chế**: Bài hát sẽ phát tự động. Người chơi phải điền các từ còn thiếu (`[...]`) vào ô trống trước khi bài hát kết thúc.
+- **Luật 1-Play**: Nhạc chỉ phát tự động 1 lần duy nhất khi bắt đầu để tăng độ khó.
+- **Lượt Nghe Lại (Retry)**: Người chơi có duy nhất **01 lượt** nhấn "Nghe lại từ đầu" nếu cảm thấy chưa hoàn thành tốt. Sau lượt này, nút sẽ bị khóa.
+- **Chấm điểm**: Hệ thống kiểm tra đáp án ngay lập tức khi nhấn `Enter` hoặc `Tab`. Khi kết thúc bài hát, các ô chưa điền đúng sẽ tự động hiển thị đáp án màu vàng.
+
+### 📝 Cấu trúc dữ liệu (`listeningData.js`)
+Dữ liệu được quản lý theo mảng các Object bài hát:
+- `startTime` / `endTime`: Thời gian xuất hiện của từng dòng (đơn vị: giây).
+- `text`: Nội dung câu hát với các ô trống đặt trong ngoặc vuông `[word]`.
+- `answers`: Mảng chứa các đáp án đúng tương ứng với thứ tự ô trống.
 
 ---
 *(Bản hướng dẫn này được cập nhật đầy đủ bởi FEG)*
