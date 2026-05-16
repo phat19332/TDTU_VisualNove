@@ -105,3 +105,33 @@
 - Multi-song selection UI.
 - Persistent per-song best score.
 - Backend-driven listening content management.
+
+## Phase 5 - VIP Enhancements (Optional high-impact ideas)
+
+- Social & Leaderboards: add per-song online leaderboards and global rankings using Supabase; allow sharing score links and embedding replays.
+- Achievements & Daily Challenges: award badges, streaks, and time-limited challenges to increase retention.
+- Adaptive Audio / Stems: use WebAudio to provide isolated stems (vocals, instruments) for advanced listening modes and interactive mixing.
+- Creator Tools: in-app editor for beatmaps/lyrics with validation and preview; enable community song packs (signed/approved uploads).
+- Analytics & Experimentation: instrument key events (open/listen/retry/finish) for analytics and A/B testing of UX flows.
+- Accessibility & Localization polish: captions, keyboard-first navigation, high-contrast themes, screen-reader labels, and thorough i18n coverage.
+- PWA & Offline Support: make the game installable, pre-cache songs and assets, and support background sync for saves.
+- Content Pipeline & CI: validate `listeningData` in CI (placeholder count vs answers), lint i18n keys, and auto-run smoke tests on PRs.
+- Performance & Streaming: lazy-load heavy modules (rhythm, listening), stream long audio, and optimize asset sizes (OGG/MP3 tradeoffs).
+- Security & Integrity: sanitize all injected HTML (i18n/data), add CSP headers guidance, and validate user input on save/load flows.
+- Testing & Automation: add unit tests for parsing, audio-state integration tests, and an end-to-end test that opens the Listening flow.
+- Monetization / Live Ops (optional): cosmetic skins, seasonal song packs, and optional donations or premium content.
+- Extra polish: controller support, haptic feedback on mobile, animated score screens, replay/highlight of correct answers.
+
+**Suggested next steps (prioritized)**
+- (P0) Fix critical audio path + robust play()/UI sync (Phase 1 items).
+- (P1) Add `listeningData` validator and run in CI.
+- (P1) Add BGM handshake tests (open/close cycles) and fix edge-cases for autoplay blocked.
+- (P2) Implement basic online leaderboards and per-song best score storage.
+- (P3) Build creator/beatmap editor and PWA/offline support.
+
+**Verification additions**
+- Leaderboard displays correct top scores and prevents tampering.
+- Accessibility checks: keyboard navigation and screen-reader friendly labels for all overlays.
+- PWA install flow works and offline assets load correctly for one listening song.
+
+These VIP features are optional but will significantly increase retention, shareability, and perceived polish of the game.

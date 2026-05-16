@@ -370,6 +370,9 @@ body {
   width: 80%;
   opacity: 0;
   transform: scale(0.8) translateY(20px);
+}
+
+.start-animation {
   animation: studioFadeInScale 3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
@@ -1718,3 +1721,28 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Personal Best badge inside minigame hub card */
+.game-card-best {
+  display: inline-block;
+  margin-top: 6px;
+  background: linear-gradient(135deg, #78350f, #d97706);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35);
+  animation: bestBadgePulse 2.5s ease-in-out infinite;
+}
+
+@keyframes bestBadgePulse {
+  0%, 100% { box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35); }
+  50%       { box-shadow: 0 2px 16px rgba(217, 119, 6, 0.7); }
+}
+
+/* ── Autosave toast (already in HTML but needs z-index fix) ── */
+.autosave-toast {
+  z-index: 50000 !important;
+}

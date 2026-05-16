@@ -6,11 +6,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Time, Dreams, Trials & Us</title>
   <link rel="icon" type="image/png" href="/assets/logo/feg_logo.png" />
+  <!-- PWA & SEO -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="description" content="TDTU: Ordinary Days — Visual Novel &amp; Mini-games đặt tại Đại học Tôn Đức Thắng." />
+  <meta name="theme-color" content="#0A4595" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="TDTU Game" />
+
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/wordle.css">
   <link rel="stylesheet" href="/listening.css">
   <!-- Google Fonts: Inter cho Text thông thường và Noto Serif cho Dialogue -->
-    <link
+  <link
     href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800;900&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap"
     rel="stylesheet">
   <!-- Core Modules -->
@@ -20,12 +27,26 @@
 
 <body>
   <div id="game-container">
+    <!-- Start Overlay: Bắt buộc tương tác để unlock AudioContext -->
+    <div id="start-overlay" class="screen active"
+      style="background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; cursor: pointer;">
+      <div style="text-align: center; color: #fff; font-family: 'Be Vietnam Pro', sans-serif;">
+        <div style="font-size: 3.5rem; margin-bottom: 16px; animation: pulse 1.5s infinite;">🎮</div>
+        <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 8px; letter-spacing: 2px;">TDTU: Ordinary Days</h1>
+        <p style="font-size: 1.1rem; color: rgba(255,255,255,0.65); margin-bottom: 40px;">Visual Novel &amp; Mini-games</p>
+        <div style="border: 2px solid rgba(255,255,255,0.4); border-radius: 50px; padding: 14px 48px; font-size: 1.15rem; font-weight: 700; letter-spacing: 1px; animation: pulse 1.5s infinite;">
+          ▶ Nhấp để Bắt Đầu / Click to Start
+        </div>
+      </div>
+    </div>
+
     <!-- Màn Hình Giới Thiệu Studio -->
-    <div id="studio-screen" class="screen active">
+    <div id="studio-screen" class="screen">
       <div class="studio-logo-container">
         <img class="studio-logo" src="" id="feg-logo-img" alt="FEG Studio">
       </div>
     </div>
+
 
     <!-- Màn Hình Splash (Loading Poster) -->
     <div id="splash-screen" class="screen">
@@ -44,7 +65,7 @@
           </div>
           <div class="logo-subtitle">— Đại Học Tôn Đức Thắng · Nơi Ước Mơ Bắt Đầu —</div>
         </div>
-        
+
         <div class="menu-buttons">
           <button id="btn-start" class="menu-btn" data-i18n="btn-start">Bắt Đầu Mới</button>
           <button id="btn-minigames-hub" class="menu-btn" data-i18n="btn-minigames-hub">Trung Tâm Giải Trí</button>
@@ -192,7 +213,8 @@
         <button id="btn-confirm-player" class="modal-close-btn" style="background:var(--tdt-blue);"
           data-i18n="player-id-confirm">Xác Nhận & Chơi</button>
         <button id="btn-skip-player" class="modal-close-btn"
-          style="background:#999;margin-top:5px;font-size:0.9rem;padding:8px 30px;" data-i18n="player-id-skip">Chơi Ẩn Danh (Không Lưu Online)</button>
+          style="background:#999;margin-top:5px;font-size:0.9rem;padding:8px 30px;" data-i18n="player-id-skip">Chơi Ẩn
+          Danh (Không Lưu Online)</button>
       </div>
     </div>
 
@@ -314,6 +336,7 @@
             <div class="game-card-body">
               <h3 class="game-card-title">Music Listening</h3>
               <p class="game-card-desc" data-i18n="hub-listening-desc">Nghe nhạc và hoàn thiện lời bài hát còn thiếu</p>
+              <span id="listening-best-badge" class="game-card-best" style="display:none;"></span>
             </div>
             <div class="game-card-badge badge-new" data-i18n="hub-badge-new">MỚI</div>
           </div>
@@ -428,6 +451,52 @@
       </div>
     </div>
 
+    <!-- Retry Prompt Modal -->
+    <div id="retry-prompt-modal" class="modal-overlay hidden"
+      style="z-index: 10000; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(12px);">
+      <div class="glass-panel"
+        style="width: 500px; padding: 40px; text-align: center; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 20px;">
+        <h2
+          style="color: var(--tdt-gold); font-family: var(--font-title); font-size: 2.5rem; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(251, 191, 36, 0.4);"
+          >Bài Hát Đã Kết Thúc</h2>
+        <p style="color: #fff; font-size: 1.2rem; line-height: 1.5; margin-bottom: 20px;">Bạn vẫn còn 1 lượt nghe lại. Bạn có muốn dùng quyền này không, hay nộp bài luôn?</p>
+
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+          <button id="btn-retry-yes" class="diff-btn"
+            style="background: #38bdf8; color: #0c4a6e; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);">
+            🎧 Nghe lại từ đầu (Mất lượt)
+          </button>
+          <button id="btn-retry-no" class="diff-btn"
+            style="background: #4ade80; color: #064e3b; box-shadow: 0 4px 15px rgba(74, 222, 128, 0.4);">
+            ✅ Nộp Bài Luôn
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Listening Exit Guard Modal -->
+    <div id="listening-exit-modal" class="modal-overlay hidden"
+      style="z-index: 10000; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(12px);">
+      <div class="glass-panel"
+        style="width: 450px; padding: 40px; text-align: center; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 20px;">
+        <h2
+          style="color: #ef4444; font-family: var(--font-title); font-size: 2.5rem; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(239, 68, 68, 0.4);"
+          >Cảnh Báo!</h2>
+        <p style="color: #fff; font-size: 1.1rem; line-height: 1.5; margin-bottom: 20px;">Bạn có chắc chắn muốn bỏ cuộc? Tiến trình bài nghe hiện tại sẽ bị mất.</p>
+
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+          <button id="btn-listen-quit-yes" class="diff-btn"
+            style="background: #ef4444; color: #450a0a; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);">
+            🚪 Vẫn Thoát (Mất Bài)
+          </button>
+          <button id="btn-listen-quit-no" class="diff-btn"
+            style="background: #4ade80; color: #064e3b; box-shadow: 0 4px 15px rgba(74, 222, 128, 0.4);">
+            🎧 Tiếp Tục Nghe
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Overlay: Listening Game -->
     <div id="listening-overlay" class="modal-overlay hidden">
       <div class="listening-container">
@@ -439,7 +508,8 @@
               <p id="listening-song-artist">Artist Name</p>
             </div>
           </div>
-          <button id="btn-close-listening" class="modal-close-btn" style="margin-top: 0; background: #ef4444;">✕ Thoát</button>
+          <button id="btn-close-listening" class="modal-close-btn" style="margin-top: 0; background: #ef4444;">✕
+            Thoát</button>
         </div>
 
         <!-- Instruction Panel (shown before game starts) -->
@@ -449,7 +519,8 @@
             <li>🎧 Bài hát sẽ được phát <strong>tự động một lần duy nhất</strong> khi bạn bắt đầu.</li>
             <li>✍️ Hãy <strong>tập trung lắng nghe</strong> và điền từ còn thiếu vào ô trống trong lời bài hát.</li>
             <li>⏎ Nhấn <strong>Enter</strong> hoặc <strong>Tab</strong> ra ô kế để kiểm tra đáp án ngay lập tức.</li>
-            <li>⏹ Nếu bạn nhấn <strong>"Nghe lại từ đầu"</strong>, bài hát sẽ phát lại từ đầu — nhưng chỉ được <strong>1 lần</strong>.</li>
+            <li>⏹ Nếu bạn nhấn <strong>"Nghe lại từ đầu"</strong>, bài hát sẽ phát lại từ đầu — nhưng chỉ được <strong>1
+                lần</strong>.</li>
             <li>🚫 Bạn <strong>không thể tua</strong> hay tạm dừng bài hát trong khi đang phát.</li>
             <li>🏆 Điểm số tính theo số ô trống điền <strong>đúng chính xác</strong>.</li>
           </ul>
@@ -463,7 +534,8 @@
         <div class="listening-footer">
           <div class="progress-container">
             <span id="listening-time" class="music-time">0:00 / 0:00</span>
-            <input type="range" id="listening-progress" value="0" min="0" max="100" style="pointer-events:none;cursor:default;">
+            <input type="range" id="listening-progress" value="0" min="0" max="100"
+              style="pointer-events:none;cursor:default;">
           </div>
           <div class="playback-controls">
             <button id="btn-listening-play" class="listening-stop-btn" disabled>⏹ Nghe lại từ đầu</button>

@@ -7,7 +7,83 @@ import { I18N_DICT } from './i18n.js';
 import { WordleGame, renderWordleRow, getRandomWord } from './wordle.js';
 import { ListeningGame } from './listening.js';
 
+// ── PWA: Register/Unregister Service Worker ───────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      // Disable SW in dev mode to avoid caching issues with Vite
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+          registration.unregister();
+        }
+      });
+    } else {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .then(reg => console.log('[SW] Registered, scope:', reg.scope))
+        .catch(err => console.warn('[SW] Registration failed:', err));
+    }
+  });
+}
+
+// ───────────────────────────────────────────────────────────────
+// Global Toast Notification System
+// ───────────────────────────────────────────────────────────────
+let _toastContainer = null;
+
+/**
+ * Show a floating toast notification.
+ * @param {string} message  HTML-safe text
+ * @param {'info'|'success'|'warning'|'achievement'} [type]
+ * @param {number} [durationMs]
+ */
+function showToast(message, type = 'info', durationMs = 3500) {
+  if (!_toastContainer) {
+    _toastContainer = document.createElement('div');
+    _toastContainer.id = 'toast-container';
+    _toastContainer.style.cssText = [
+      'position:fixed', 'bottom:24px', 'left:50%', 'transform:translateX(-50%)',
+      'display:flex', 'flex-direction:column', 'align-items:center', 'gap:10px',
+      'z-index:99999', 'pointer-events:none'
+    ].join(';');
+    document.body.appendChild(_toastContainer);
+  }
+
+  const icons = { info:'\u2139\uFE0F', success:'\u2705', warning:'\u26A0\uFE0F', achievement:'\uD83C\uDFC6' };
+  const colors = {
+    info:        'linear-gradient(135deg,#334155,#1e293b)',
+    success:     'linear-gradient(135deg,#166534,#15803d)',
+    warning:     'linear-gradient(135deg,#92400e,#b45309)',
+    achievement: 'linear-gradient(135deg,#78350f,#d97706)'
+  };
+
+  const toast = document.createElement('div');
+  toast.style.cssText = [
+    `background:${colors[type] ?? colors.info}`,
+    'color:#fff', 'border-radius:14px', 'padding:12px 22px',
+    'font-family:var(--font-ui,sans-serif)', 'font-size:0.95rem', 'font-weight:600',
+    'box-shadow:0 8px 30px rgba(0,0,0,0.45)', 'max-width:360px', 'text-align:center',
+    'opacity:0', 'transform:translateY(20px)',
+    'transition:opacity 0.3s ease, transform 0.3s ease',
+    'pointer-events:none', 'white-space:pre-line'
+  ].join(';');
+  toast.textContent = `${icons[type] ?? ''} ${message}`;
+
+  _toastContainer.appendChild(toast);
+  // Force reflow then animate in
+  void toast.offsetWidth;
+  toast.style.opacity = '1';
+  toast.style.transform = 'translateY(0)';
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(-10px)';
+    setTimeout(() => toast.remove(), 350);
+  }, durationMs);
+}
+
+// ───────────────────────────────────────────────────────────────
 // Trạng thái Player
+// ───────────────────────────────────────────────────────────────
 let currentPlayerId = null;
 let useOnlineSave = false;
 
@@ -118,20 +194,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // --- Sequence: Studio Intro -> Loading Splash -> Title ---
-  setTimeout(() => {
-    if (studioScreen) studioScreen.classList.remove('active');
-    if (splashScreen) splashScreen.classList.add('active');
+  // --- Sequence: Start Overlay -> Studio Intro -> Loading Splash -> Title ---
+  const startOverlay = document.getElementById('start-overlay');
+  
+  function startSequence() {
+    if (studioScreen) studioScreen.classList.add('active');
+    
+    const logoImg = document.getElementById('feg-logo-img');
+    if (logoImg) logoImg.classList.add('start-animation');
 
     setTimeout(() => {
-      splashScreen.classList.remove('active');
-      titleScreen.classList.add('active');
+      if (studioScreen) studioScreen.classList.remove('active');
+      if (splashScreen) splashScreen.classList.add('active');
 
-      if (gameScript && gameScript[0] && gameScript[0].bgm) {
-        game.playBGM(gameScript[0].bgm);
-      }
-    }, 5000);
-  }, 3500);
+      setTimeout(() => {
+        if (splashScreen) splashScreen.classList.remove('active');
+        if (titleScreen) titleScreen.classList.add('active');
+
+        if (gameScript && gameScript[0] && gameScript[0].bgm) {
+          game.playBGM(gameScript[0].bgm);
+        }
+      }, 5000);
+    }, 3500);
+  }
+
+  if (startOverlay) {
+    startOverlay.addEventListener('click', () => {
+      startOverlay.style.opacity = '0';
+      startOverlay.style.transition = 'opacity 0.5s ease';
+      setTimeout(() => {
+        startOverlay.classList.remove('active');
+        startOverlay.style.display = 'none';
+        startSequence();
+      }, 500);
+    }, { once: true });
+  } else {
+    startSequence();
+  }
+
 
   // --- Khởi tạo UI Elements ---
   const ui = {
@@ -667,10 +767,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
   listeningGame.onStop = () => {
     if (listeningGame._bgmWasPlaying && game.bgmAudio) {
-      game.bgmAudio.play().catch(() => {});
+      game.bgmAudio.play().catch(() => { });
     }
     listeningGame._bgmWasPlaying = false;
   };
+
+  // Cung cấp player ID cho listeningGame để submit leaderboard
+  listeningGame.getPlayerId = () => currentPlayerId;
 
   function startRhythmGame() {
     game.playClick();
@@ -731,6 +834,38 @@ document.addEventListener('DOMContentLoaded', async () => {
       listeningGame.start('hello-vietnam');
     });
   }
+
+  // ── Achievement toasts when listening game finishes ────────────────────
+  listeningGame.onFinish = (pct, isNewBest, firstTime) => {
+    if (firstTime) {
+      showToast('Lần đầu tiên hoàn thành bài nghe!\nBắt đầu hành trình của bạn!', 'achievement', 4500);
+    } else if (isNewBest) {
+      showToast(`Kỷ lục mới: ${pct}%! Đủnh cao nhất của bạn!`, 'achievement', 4000);
+    } else if (pct >= 90) {
+      showToast(`Xuất sắc! Bạn đạt ${pct}%!`, 'success', 3000);
+    }
+    // Refresh best-score badge on hub card
+    _refreshListeningCardBadge();
+  };
+
+  // ── Show best score badge on Minigame Hub card ─────────────────────
+  function _refreshListeningCardBadge() {
+    const best = parseInt(localStorage.getItem('tdtu_listening_best_hello-vietnam') || '0', 10);
+    const badgeEl = document.getElementById('listening-best-badge');
+    if (!badgeEl) return;
+    if (best > 0) {
+      badgeEl.textContent = `⭐ Best: ${best}%`;
+      badgeEl.style.display = 'inline-block';
+    } else {
+      badgeEl.style.display = 'none';
+    }
+  }
+
+  // Refresh when hub opens
+  if (btnMinigamesHub) {
+    btnMinigamesHub.addEventListener('click', _refreshListeningCardBadge, { capture: true });
+  }
+  _refreshListeningCardBadge(); // initial render
 
   // --- Quick Menu Màn Hình Game ---
   document.getElementById('qm-save').addEventListener('click', (e) => { e.stopPropagation(); game.playClick(); openSaveLoadMenu('save'); });

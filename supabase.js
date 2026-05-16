@@ -293,3 +293,75 @@ export async function getAllSaves(playerId) {
     return [];
   }
 }
+
+/**
+ * Lưu điểm Listening Game lên Supabase.
+ * Chỉ ghi đè nếu score mới cao hơn record hiện tại (upsert + client-side guard).
+ * @param {string} playerId
+ * @param {string} songId
+ * @param {number} score  0-100 (percentage)
+ * @param {number} correct
+ * @param {number} total
+ */
+export async function saveListeningScore(playerId, songId, score, correct, total) {
+  if (!supabaseClient || !playerId) return false;
+
+  try {
+    // Lấy record hiện tại để so sánh
+    const { data: existing } = await supabaseClient
+      .from('listening_scores')
+      .select('score')
+      .eq('player_id', playerId)
+      .eq('song_id', songId)
+      .single();
+
+    // Chỉ upsert nếu chưa có hoặc score cao hơn
+    if (existing && existing.score >= score) {
+      console.log(`📊 Score ${score}% không cao hơn best hiện tại ${existing.score}%, bỏ qua.`);
+      return true;
+    }
+
+    const { error } = await supabaseClient
+      .from('listening_scores')
+      .upsert({
+        player_id:   playerId,
+        song_id:     songId,
+        score:       score,
+        correct:     correct,
+        total:       total,
+        achieved_at: new Date().toISOString()
+      }, { onConflict: 'player_id,song_id' });
+
+    if (error) throw error;
+    console.log(`✅ Listening score saved: ${playerId} — ${songId} — ${score}%`);
+    return true;
+  } catch (err) {
+    console.error('❌ Lỗi save listening score:', err);
+    return false;
+  }
+}
+
+/**
+ * Lấy top-N leaderboard cho một bài hát.
+ * @param {string} songId
+ * @param {number} [limit=10]
+ * @returns {Promise<Array<{player_id:string, score:number, correct:number, total:number, achieved_at:string}>>}
+ */
+export async function fetchLeaderboard(songId, limit = 10) {
+  if (!supabaseClient) return [];
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('listening_scores')
+      .select('player_id, score, correct, total, achieved_at')
+      .eq('song_id', songId)
+      .order('score', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error('❌ Lỗi fetch leaderboard:', err);
+    return [];
+  }
+}
