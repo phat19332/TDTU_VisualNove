@@ -211,9 +211,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (splashScreen) splashScreen.classList.remove('active');
         if (titleScreen) titleScreen.classList.add('active');
 
-        if (gameScript && gameScript[0] && gameScript[0].bgm) {
-          game.playBGM(gameScript[0].bgm);
-        }
+        // Cố định bật nhạc nền màn hình chính thay vì phụ thuộc vào kịch bản Supabase
+        game.playBGM('/assets/audio/tdtu_theme.mp3');
       }, 5000);
     }, 3500);
   }
@@ -222,6 +221,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     startOverlay.addEventListener('click', () => {
       startOverlay.style.opacity = '0';
       startOverlay.style.transition = 'opacity 0.5s ease';
+      
+      // THỦ THUẬT: Mồi nhạc BGM (Audio Warm-up) ngay khi có cú click đầu tiên
+      // Cố định chạy ngầm bài nhạc chính (tdtu_theme.mp3) ở mức âm lượng 0
+      game.bgmAudio.src = getAssetUrl('/assets/audio/tdtu_theme.mp3');
+      game.bgmAudio.volume = 0;
+      game.bgmAudio.play().catch(e => console.warn("Warm-up bị chặn:", e));
+
       setTimeout(() => {
         startOverlay.classList.remove('active');
         startOverlay.style.display = 'none';
@@ -254,6 +260,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- Khởi tạo Engine ---
   const game = new VNEngine(gameScript, ui);
+  window.game = game; // Expose for testing
 
   // Hook i18n
   game.onLanguageChange = (lang) => {
@@ -998,8 +1005,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             slOverlay.classList.add('hidden');
             game.mcName = saveData.mcName || "Người chơi";
             game.start();
-            game.currentIndex = saveData.index;
-            game.renderLine(game.script[game.currentIndex]);
+            game.loadState(saveData.index);
           }
         }
       });

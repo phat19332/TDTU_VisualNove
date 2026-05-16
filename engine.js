@@ -124,6 +124,48 @@ export class VNEngine {
     }
   }
 
+  loadState(targetIndex) {
+    this.currentIndex = targetIndex;
+    this.stopCurrentSfx(); // Dừng SFX cũ trước khi load để tránh lọt âm
+    
+    // Tìm các trạng thái hiển thị cuối cùng trước index này
+    let lastBg = null;
+    let lastBgm = null;
+    
+    // Quét từ đầu đến targetIndex để lấy bối cảnh
+    for (let i = 0; i <= targetIndex; i++) {
+        const line = this.script[i];
+        if (line.bg) lastBg = line.bg;
+        if (line.bgm) {
+            if (line.bgm === 'stop') lastBgm = null;
+            else lastBgm = line.bgm;
+        }
+    }
+    
+    // Áp dụng Background
+    if (lastBg) {
+      if (lastBg.startsWith('#')) {
+          this.ui.layerBg.style.backgroundImage = 'none';
+          this.ui.layerBg.style.backgroundColor = lastBg;
+      } else {
+          this.ui.layerBg.style.backgroundImage = `url('${getAssetUrl(lastBg)}')`;
+          this.ui.layerBg.style.backgroundColor = 'transparent';
+      }
+    }
+    
+    // Áp dụng BGM
+    if (lastBgm) {
+        this.playBGM(lastBgm);
+    } else {
+        this.bgmAudio.pause();
+        this.currentBgmUrl = null;
+        if (this.onBgmChange) this.onBgmChange(null);
+    }
+    
+    // Chạy renderLine của line hiện tại để render nhân vật, text, v.v
+    this.renderLine(this.script[this.currentIndex]);
+  }
+
   next(isAutoTrigger = false) {
     clearTimeout(this.autoTimer); // Nếu người dùng chủ động bấm, huỷ auto hiện tại
 
@@ -232,9 +274,17 @@ export class VNEngine {
           
           // Thông báo cho Music Player UI
           if (this.onBgmChange) this.onBgmChange(line.bgm);
-        } else if (this.bgmAudio.paused) {
+        } else {
           // Nếu nhạc đang dừng (do bị chặn trước đó) thì thử phát lại
-          this.bgmAudio.play().catch(() => {});
+          if (this.bgmAudio.paused) {
+             this.bgmAudio.play().catch(() => {});
+          }
+          // Phục hồi âm lượng nếu đang dùng thủ thuật mồi nhạc (warm-up)
+          if (this.bgmAudio.volume === 0) {
+              this.bgmAudio.volume = (this._preDuckVolume !== null) ? (this.bgmVolume * this.DUCK_LEVEL) : this.bgmVolume;
+          }
+          this.currentBgmUrl = line.bgm;
+          if (this.onBgmChange) this.onBgmChange(line.bgm);
         }
       }
 
@@ -550,6 +600,13 @@ export class VNEngine {
     if (this.bgmAudio.src !== absoluteBvUrl) {
       this.bgmAudio.src = absoluteBvUrl;
       this.bgmAudio.volume = this.bgmVolume;
+      this.currentBgmUrl = url;
+      if (this.onBgmChange) this.onBgmChange(url);
+    } else {
+      // Phục hồi âm lượng nếu đang dùng thủ thuật mồi nhạc (warm-up)
+      if (this.bgmAudio.volume === 0) {
+          this.bgmAudio.volume = this.bgmVolume;
+      }
       this.currentBgmUrl = url;
       if (this.onBgmChange) this.onBgmChange(url);
     }
