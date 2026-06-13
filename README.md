@@ -12,7 +12,8 @@ Chào mừng bạn đến với **Time, Dreams, Trials & Us**, một dự án Vi
 - 🎮 **Mini-games Tích Hợp**: 
   - **Wordle Challenge**: Giải đố tiếng Anh phong cách Wordle.
   - **Rhythm Game**: Game âm nhạc nhịp điệu phong cách FNF với 4 độ khó, thanh máu Tug-of-war.
-  - **Music Listening**: Thử thách khả năng nghe tiếng Anh qua bài hát (Cloze Test) với hệ thống đồng bộ lời bài hát thời gian thực.
+  - **Music Listening**: Thử thách khả năng nghe tiếng Anh qua bài hát (Cloze Test) với hệ thống đồng bộ lời bài hát thời gian thực. Bảng xếp hạng điểm số (Leaderboard) toàn cầu.
+- 🔒 **Bảo mật Supabase (Anonymous Auth)**: Hệ thống cơ sở dữ liệu được bảo vệ nghiêm ngặt bằng Row Level Security (RLS) với định danh ẩn danh (Anonymous Sign-in), ngăn chặn hacker sửa đổi file Save hay phá hoại bảng xếp hạng.
 
 ## 🛠️ Công nghệ sử dụng (Tech Stack)
 
@@ -69,6 +70,8 @@ Chạy lần lượt các script SQL trong thư mục dự án lên Supabase SQL
 2. Chạy `scripts_update.sql` (Cập nhật hệ thống Dual characters).
 3. Chạy `advanced_systems_setup.sql` (Nếu có - Cấu hình Naming, Gallery, Auto-save).
 4. Chạy `sfx_setup.sql` (Thêm cột Sound Effect cho kịch bản).
+5. Chạy `listening_leaderboard_setup.sql` (Khởi tạo Bảng xếp hạng Listening).
+6. Chạy `supabase_auth_patch.sql` và `supabase_security_patch.sql` (Vá lỗi bảo mật, kích hoạt Anonymous Sign-in và Row Level Security).
 
 ### 5. Chạy Server Local
 ```bash
@@ -98,24 +101,24 @@ Game hỗ trợ hiển thị **2 nhân vật cùng lúc** (Trái và Phải).
 > [!IMPORTANT]
 > **Hiệu ứng Visual Focus**: Engine tự động so khớp tên trong cột `speaker` với nhân vật. Nhân vật đang nói sẽ **sáng hơn và phóng to**, nhân vật nghe sẽ **tối lại và lùi về sau**.
 
-### ⚙️ Thông số cảnh & Thoại
+### ⚙️ Thông số cảnh, Thoại & Hành động (Actions)
 | Tên cột | Ý nghĩa | Lưu ý |
 | :--- | :--- | :--- |
 | **order_index** | Thứ tự xuất hiện | Điền số: 10, 20, 30... (Bắt buộc và không trùng). |
 | **scene_id** | Mã định danh đoạn | Ví dụ: `START`, `LOP_HOC_1`. Dùng để nhảy đến khi có Lựa chọn. |
+| **action** | Gọi sự kiện/Game | Điền lệnh (VD: `start_exam_part1`, `start_exam_part2`). Bỏ trống nếu là thoại bình thường. |
 | **bg** | Ảnh nền | Điền tên file ảnh trong Storage (ví dụ: `tdtu_gate.png`). |
 | **bgm** | Nhạc nền | Điền tên file nhạc (ví dụ: `tdtu_theme.mp3`) hoặc `stop` để tắt. |
 | **char_anim** | Hiệu ứng hiện hình | Ví dụ: `fade-in` (mặc định), `slide-in-right`. |
-| **dialogue** | Lời thoại | **Bắt buộc**. Text thường hoặc JSON `{"vi": "Tiếng Việt", "en": "English"}`. |
+| **dialogue** | Lời thoại | Text thường hoặc JSON `{"vi": "Tiếng Việt", "en": "English"}`. Nếu dùng `action`, có thể gõ đại 1 dấu chấm `.` vào đây. |
 | **choices** | Các lựa chọn | Dùng định dạng JSON hoặc Viết tắt (Shorthand). |
 | **next_id** | Nhảy đến dòng | Điền `scene_id` của dòng tiếp theo. |
 | **sfx** | Hiệu ứng âm thanh | Tên file SFX (VD: `thunder.mp3`). Điền `stop` để dừng SFX đang phát. |
-| **sfx_volume** | Âm lượng SFX | Từ 0.0 đến 1.0 (mặc định: 1.0). |
-| **sfx_loop** | Lặp SFX | `true` để lặp liên tục (dùng cho ambient: mưa, gió). Mặc định: `false`. |
 
 > [!TIP]
-> **Cách dùng SFX**: SFX hoạt động giống BGM — tiếp tục phát qua các dòng thoại cho đến khi bạn ghi `sfx = "stop"` hoặc gán file SFX mới. Ví dụ: gán `sfx = "rain.mp3"` + `sfx_loop = true` ở dòng bắt đầu mưa, rồi gán `sfx = "stop"` ở dòng hết mưa.
-
+> **Lệnh `action` cho Kỳ Thi Tiếng Anh**: 
+> - Dùng `start_exam_part1`: Để gọi phần thi **Rhythm Game**. Điểm được lưu ngầm.
+> - Dùng `start_exam_part2`: Để gọi phần thi **Listening** và **Wordle**, sau đó tự động tổng hợp điểm cả 3 phần để trả về xếp loại `{english_class}`.
 
 ## 2. Hệ thống Nâng cao cho Kịch bản
 
@@ -123,9 +126,10 @@ Game hỗ trợ hiển thị **2 nhân vật cùng lúc** (Trái và Phải).
 Trong thoại, sử dụng **`{Name}`**.
 *   VD: `Hạo Nhiên: Chào {Name}! Đi thư viện không?`
 *   Engine sẽ tự thay thế bằng tên MC người chơi nhập vào.
+Tương tự, biến **`{english_class}`** sẽ hiển thị lớp xếp loại tiếng anh của người chơi sau khi thi xong.
 
 ### Tự động lưu (Auto-save)
-Game sẽ tự động lưu lại tiến trình vào **Slot 0** sau mỗi 30 giây hoặc khi có thay đổi quan trọng. Người chơi có thể tải lại từ Slot 0 này bất cứ lúc nào từ Menu Load.
+Game sẽ tự động lưu lại tiến trình vào **Slot 0** sau mỗi 30 giây hoặc khi có thay đổi quan trọng. Người chơi có thể tải lại từ Slot 0 này bất cứ lúc nào từ Menu Load. Lưu ý: Do cơ chế bảo mật mới, file save được đồng bộ với tài khoản ẩn danh trên trình duyệt hiện tại.
 
 ### Thư viện Ảnh (Gallery)
 Thêm cột **`cg_id`** vào bảng `scripts`. Khi người chơi đọc đến dòng đó, ảnh `bg` sẽ được mở khóa vĩnh viễn trong Gallery. *(Danh sách ID ảnh được cấu hình trong `main.js` (biến `CG_GALLERY`))*.
@@ -145,57 +149,3 @@ Ngăn cách các lựa chọn bằng `;;` và ngăn cách Lời thoại | ID Sce
   {"text": "Từ chối vì bận chạy deadline", "next_id": "REJECT_HER"}
 ]
 ```
-
----
-
-## 3. Hệ thống Đa ngôn ngữ (i18n)
-
-Game hiện tại hỗ trợ chuyển giao diện tĩnh và kịch bản cốt truyện tự động (Live Translation) giữa Tiếng Việt và Tiếng Anh:
-
-1. **Giao diện (UI)**: Quản lý trong `i18n.js`. Không cần chỉnh sửa qua Supabase.
-2. **Kịch bản (Scripts)**: Nhập dạng JSON ngay vào cột `dialogue` trên Supabase:
-   ```json
-   {"vi": "Xin chào!", "en": "Hello!"}
-   ```
-*(Ngôn ngữ mặc định được tự động thiết lập và lưu trên trình duyệt của người chơi)*
-
----
-
-## 4. Quản lý Nhạc & BGM
-
-Hệ thống nhạc hoạt động theo cơ chế **Scene-Driven**:
-1. Nhạc đổi theo cột `bgm` của `scripts`.
-2. **Bảng `music` (Metadata)**: Nếu tên file `bgm` khớp với bảng `music`, Player sẽ hiển thị Tên bài hát, Nghệ sĩ và Ảnh bìa.
-
-### Thiết lập Bảng `music`
-| Tên cột | Ý nghĩa | Cách điền |
-| :--- | :--- | :--- |
-| **title** | Tên bài hát | Ví dụ: `Tự hào sinh viên Tôn Đức Thắng`. |
-| **artist** | Nghệ sĩ | Ví dụ: `TDTU Chorus`. |
-| **url** | **Link nhạc** | Copy Public URL từ Storage (Phải khớp với `bgm` trong scripts). |
-| **cover_url** | Ảnh bìa | Link ảnh hiện trong Player (tuỳ chọn). |
-
-### Khóa Nhạc (Fixed Mood)
-Dùng cột **`bgm_lock` = `true`** trong `scripts`. Trình phát nhạc sẽ hiện 🔒 và chặn người chơi đổi nhạc, giữ nguyên cảm xúc cho cảnh quan trọng. Chế độ Playlist cũng có thể được bật từ Player.
-
----
-
-## 🎧 Hệ thống Music Listening Minigame
-
-Module này giúp người chơi luyện kỹ năng nghe chi tiết thông qua các bài hát (Cloze Test).
-
-### 🕹️ Cách chơi (Gameplay)
-- **Cơ chế**: Bài hát sẽ phát tự động. Người chơi phải điền các từ còn thiếu (`[...]`) vào ô trống trước khi bài hát kết thúc.
-- **Luật 1-Play**: Nhạc chỉ phát tự động 1 lần duy nhất khi bắt đầu để tăng độ khó.
-- **Lượt Nghe Lại (Retry)**: Người chơi có duy nhất **01 lượt** nhấn "Nghe lại từ đầu" nếu cảm thấy chưa hoàn thành tốt. Sau lượt này, nút sẽ bị khóa.
-- **Chấm điểm**: Hệ thống kiểm tra đáp án ngay lập tức khi nhấn `Enter` hoặc `Tab`. Khi kết thúc bài hát, các ô chưa điền đúng sẽ tự động hiển thị đáp án màu vàng.
-
-### 📝 Cấu trúc dữ liệu (`listeningData.js`)
-Dữ liệu được quản lý theo mảng các Object bài hát:
-- `startTime` / `endTime`: Thời gian xuất hiện của từng dòng (đơn vị: giây).
-- `text`: Nội dung câu hát với các ô trống đặt trong ngoặc vuông `[word]`.
-- `answers`: Mảng chứa các đáp án đúng tương ứng với thứ tự ô trống.
-
----
-*(Bản hướng dẫn này được cập nhật đầy đủ bởi FEG)*
-

@@ -584,12 +584,12 @@ export class RhythmGame {
     this.logic.updateUI();
 
     // Tính toán thời điểm bài hát / map kết thúc (Giây) + Thêm 3 giây dư âm
-    // Yêu cầu gameplay: tối thiểu 2 phút.
+    // Yêu cầu gameplay: Tối đa 30 giây
     if (this.notesMgr.notes.length === 0) {
-      this.endTime = 120;
+      this.endTime = 30;
     } else {
       const mapEnd = Math.max(...this.notesMgr.notes.map(n => n.time + n.holdLength)) + 3;
-      this.endTime = Math.max(120, mapEnd);
+      this.endTime = Math.min(30, mapEnd); // Cắt thời gian tối đa ở 30s
     }
 
     this.cpuChar = new CharacterManager(270, 500, true);

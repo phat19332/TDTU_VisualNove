@@ -49,6 +49,12 @@ export class VNEngine {
     
     // Player State
     this.mcName = "Người chơi";
+    /** @type {Record<string, any>} Trạng thái người chơi: lớp tiếng Anh, flags... */
+    this.state = {};
+
+    // Action pause flag
+    /** @type {boolean} True khi đang chờ một action bên ngoài (mini-game) hoàn thành */
+    this._actionPending = false;
 
     // Character Slot Tracking (lưu trữ tên nhân vật đang đứng ở mỗi slot)
     this.slotState = {
@@ -71,6 +77,13 @@ export class VNEngine {
     this.onBgmChange = null;
     /** @type {((isLocked: boolean) => void) | null} */
     this.onBgmLockChange = null;
+    /**
+     * Được gọi khi kịch bản gặp cờ `action`.
+     * Hàm nhận vào tên action và phải trả về một Promise.
+     * Engine sẽ đợi Promise resolve rồi mới tiếp tục.
+     * @type {((actionName: string, line: object) => Promise<void>) | null}
+     */
+    this.onAction = null;
 
     // Bắt sự kiện kết thúc nhạc để chuyển bài (nếu bật Playlist)
     this.bgmAudio.addEventListener('ended', () => {
@@ -169,6 +182,9 @@ export class VNEngine {
   next(isAutoTrigger = false) {
     clearTimeout(this.autoTimer); // Nếu người dùng chủ động bấm, huỷ auto hiện tại
 
+    // Không tiếp tục nếu đang chờ action bên ngoài (mini-game)
+    if (this._actionPending) return;
+
     // Tắt Auto/Skip nếu đang bật và người dùng thao tác bằng tay
     if (!isAutoTrigger) {
         this.isAutoMode = false; 
@@ -216,6 +232,38 @@ export class VNEngine {
   renderLine(line) {
     if (!line) return;
 
+    // 0. Xử lý Action (gọi mini-game hoặc event bên ngoài)
+    if (line.action && this.onAction) {
+      this._actionPending = true;
+      // Ẩn hộp thoại khi đang chờ action
+      if (this.ui.dialogueBox) this.ui.dialogueBox.style.display = 'none';
+      if (this.ui.textCaret) this.ui.textCaret.style.display = 'none';
+      // Gọi handler và đợi Promise
+      Promise.resolve(this.onAction(line.action, line))
+        .then(() => {
+          this._actionPending = false;
+          if (this.ui.dialogueBox) this.ui.dialogueBox.style.display = '';
+          // Chuyển sang dòng tiếp theo sau khi action xong
+          if (line.next) {
+            if (line.next === 'title_screen') { this.exitToTitle(); return; }
+            this.jumpTo(line.next);
+          } else {
+            this.currentIndex++;
+            if (this.currentIndex < this.script.length) {
+              this.renderLine(this.script[this.currentIndex]);
+            } else {
+              this.exitToTitle();
+            }
+          }
+        })
+        .catch((err) => {
+          console.error('[VNEngine] action handler failed:', err);
+          this._actionPending = false;
+          if (this.ui.dialogueBox) this.ui.dialogueBox.style.display = '';
+        });
+      return; // Dừng xử lý tiếp theo trong renderLine
+    }
+
     // 1. Xử lý Thay thế Biến (MC Name)
     let processedDialogue = "";
     if (typeof line.dialogue === 'object' && line.dialogue !== null) {
@@ -223,8 +271,13 @@ export class VNEngine {
     } else {
       processedDialogue = line.dialogue || line.text || "";
     }
+    // Thay thế biến tên nhân vật
     processedDialogue = processedDialogue.replace(/\{Name\}/g, this.mcName);
     processedDialogue = processedDialogue.replace(/\{name\}/g, this.mcName);
+    // Thay thế biến state khác (VD: {english_class})
+    processedDialogue = processedDialogue.replace(/\{(\w+)\}/g, (_, key) => {
+      return this.state[key] !== undefined ? this.state[key] : `{${key}}`;
+    });
 
     // 2. Xử lý CG Unlock (Gallery)
     if (line.cg_id && this.onCgUnlock) {

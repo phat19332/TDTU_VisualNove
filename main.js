@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   applyI18n(initialLang);
 
   // --- Khởi tạo Supabase ---
-  const supabaseReady = initSupabase();
+  const supabaseReady = await initSupabase();
 
   // --- Fetch kịch bản từ Supabase (với fallback local) ---
   let gameScript = localScript;
@@ -573,16 +573,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     exitGuardModal.classList.remove('hidden');
   }
 
+
   document.getElementById('btn-guard-save').addEventListener('click', async () => {
     game.playClick();
     await triggerAutoSave();
-    game.isDirty = false;
-    exitGuardModal.classList.add('hidden');
-    if (currentExitCallback) currentExitCallback();
-  });
-
-  document.getElementById('btn-guard-quit').addEventListener('click', () => {
-    game.playClick();
     game.isDirty = false;
     exitGuardModal.classList.add('hidden');
     if (currentExitCallback) currentExitCallback();
@@ -592,6 +586,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     game.playClick();
     exitGuardModal.classList.add('hidden');
     currentExitCallback = null;
+  });
+
+  document.getElementById('btn-guard-quit').addEventListener('click', () => {
+    game.playClick();
+    game.isDirty = false;
+    exitGuardModal.classList.add('hidden');
+    if (currentExitCallback) currentExitCallback();
   });
 
   if (btnGlobalQuit) {
@@ -607,13 +608,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Hook ẩn/hiện nút Quit Toàn Cục khi ở Visual Novel
+  // Hook ẩn/hiện nút Quit Toàn Cục khi ở Visual Novel + unlock thành tựu đầu tiên
   game.onExitScreen = () => {
     if (btnGlobalQuit) btnGlobalQuit.style.display = 'none';
   };
   const originalGameStart = game.start.bind(game);
   game.start = () => {
-    if (btnGlobalQuit) btnGlobalQuit.style.display = 'block'; // Sẽ thành flex item nều layout hỗ trợ
+    if (btnGlobalQuit) btnGlobalQuit.style.display = 'block';
+    // unlockAchievement được khai báo ở phía dưới trong cùng scope
+    if (typeof unlockAchievement === 'function') unlockAchievement('first_step');
     originalGameStart();
   };
 
@@ -1479,6 +1482,400 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.warn('🎵 BGM Metadata: Failed to fetch', e);
     }
   }
+  // ===================================================
+  // HỆ THỐNG THÀNH TỰU (ACHIEVEMENT SYSTEM)
+  // ===================================================
+
+  /**
+   * Danh sách tất cả thành tựu của game.
+   * id: duy nhất, icon: emoji, name: tên hiển thị, desc: mô tả
+   * condition: 'auto' = unlock thủ công bằng code, hoặc một chuỗi mô tả.
+   */
+  const ACHIEVEMENTS = [
+    { id: 'first_step',    icon: '🎓', name: 'Bước Đầu Tiên',    desc: 'Bắt đầu hành trình tại TDTU.' },
+    { id: 'exam_taken',    icon: '📝', name: 'Dự Thi',            desc: 'Hoàn thành kỳ thi xếp lớp Tiếng Anh.' },
+    { id: 'english_basic', icon: '📖', name: 'Bước Đầu Tiếng Anh', desc: 'Được xếp vào Lớp Tiếng Anh Cơ Bản.' },
+    { id: 'english_mid',   icon: '📚', name: 'Tiếng Anh Trung Cấp', desc: 'Được xếp vào Lớp Tiếng Anh Trung Cấp.' },
+    { id: 'english_adv',   icon: '🏆', name: 'Tiếng Anh Xuất Sắc', desc: 'Đạt loại Xuất Sắc trong kỳ thi Tiếng Anh!' },
+    { id: 'wordle_win_3',  icon: '🔤', name: 'Nhà Từ Vựng Học',   desc: 'Đoán đúng từ Wordle trong 3 lượt trở xuống.' },
+    { id: 'perfect_listen',icon: '🎧', name: 'Tai Nghe Vàng',     desc: 'Đạt 100% trong bài Nghe Hiểu.' },
+    { id: 'rhythm_combo',  icon: '🎵', name: 'Vua Nhịp Điệu',     desc: 'Đạt combo trên 50 trong Rhythm Battle.' },
+    { id: 'full_exam',     icon: '🌟', name: 'Chiến Binh Toàn Diện', desc: 'Hoàn thành cả 3 phần thi mà không bỏ cuộc.' },
+  ];
+
+  /**
+   * Lưu & lấy danh sách thành tựu đã unlock từ localStorage.
+   * @returns {string[]}
+   */
+  function getUnlockedAchievements() {
+    try { return JSON.parse(localStorage.getItem('tdtu_achievements') || '[]'); } catch { return []; }
+  }
+
+  /**
+   * Mở khóa một thành tựu theo ID. Nếu chưa có sẽ lưu + hiển thị toast.
+   * @param {string} id
+   */
+  function unlockAchievement(id) {
+    const unlocked = getUnlockedAchievements();
+    if (unlocked.includes(id)) return; // Đã có rồi
+    unlocked.push(id);
+    localStorage.setItem('tdtu_achievements', JSON.stringify(unlocked));
+
+    const achv = ACHIEVEMENTS.find(a => a.id === id);
+    if (achv) {
+      showToast(`${achv.icon} Thành Tựu Mở Khóa!\n"${achv.name}"`, 'achievement', 5000);
+    }
+  }
+
+  // Expose globally for use in mini-game callbacks
+  window.unlockAchievement = unlockAchievement;
+
+  // ===================================================
+  // GALLERY: NÂNG CẤP LÊN 2 TABS (CG + THÀNH TỰU)
+  // ===================================================
+  /**
+   * Override openGallery để render tab-based Gallery+Achievements
+   */
+  const _originalOpenGallery = openGallery;
+  // eslint-disable-next-line no-func-assign
+  openGallery = function() {
+    renderGalleryTabbed('cg');
+    galleryOverlay.classList.remove('hidden');
+  };
+
+  /** Render gallery with CG tab and Achievement tab */
+  function renderGalleryTabbed(activeTab) {
+    const galleryContent = galleryOverlay.querySelector('.gallery-content');
+    if (!galleryContent) { _originalOpenGallery(); return; }
+
+    // Build tab UI once (or refresh)
+    let tabContainer = galleryOverlay.querySelector('.gallery-tabs');
+    let contentArea = galleryOverlay.querySelector('.gallery-tab-content');
+
+    if (!tabContainer) {
+      // Insert tabs before gallery-grid
+      tabContainer = document.createElement('div');
+      tabContainer.className = 'gallery-tabs';
+      tabContainer.innerHTML = `
+        <button class="gallery-tab-btn active" data-tab="cg">🖼️ Kỷ Niệm</button>
+        <button class="gallery-tab-btn" data-tab="achievements">🏆 Thành Tựu</button>
+      `;
+
+      contentArea = document.createElement('div');
+      contentArea.className = 'gallery-tab-content';
+
+      const existingGrid = galleryOverlay.querySelector('#gallery-grid');
+      if (existingGrid) {
+        galleryContent.insertBefore(tabContainer, existingGrid);
+        // Wrap grid in content area
+        galleryContent.insertBefore(contentArea, existingGrid);
+        contentArea.appendChild(existingGrid);
+      }
+
+      tabContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.gallery-tab-btn');
+        if (!btn) return;
+        tabContainer.querySelectorAll('.gallery-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderGalleryTabbed(btn.dataset.tab);
+      });
+    }
+
+    if (activeTab === 'cg') {
+      contentArea.innerHTML = '';
+      const grid = document.createElement('div');
+      grid.id = 'gallery-grid';
+      grid.className = 'gallery-grid';
+      contentArea.appendChild(grid);
+      // Re-assign for renderGallery()
+      // We call inline render here:
+      CG_GALLERY.forEach(cg => {
+        const isUnlocked = globalData.unlocked_cgs.includes(cg.id);
+        const item = document.createElement('div');
+        item.className = 'gallery-item' + (isUnlocked ? '' : ' locked');
+        const imgUrl = getAssetUrl(cg.url);
+        item.innerHTML = `<img src="${imgUrl}" alt="${cg.title}"><div class="gallery-label">${isUnlocked ? cg.title : '???'}</div>`;
+        if (isUnlocked) {
+          item.addEventListener('click', () => {
+            game.playClick();
+            const fsImg = document.getElementById('fullscreen-img');
+            if (fsView && fsImg) { fsImg.src = imgUrl; fsView.classList.remove('hidden'); }
+          });
+        }
+        grid.appendChild(item);
+      });
+    } else {
+      // Achievements tab
+      contentArea.innerHTML = '';
+      const achvGrid = document.createElement('div');
+      achvGrid.className = 'achievement-grid';
+      const unlocked = getUnlockedAchievements();
+      ACHIEVEMENTS.forEach(achv => {
+        const isUnlocked = unlocked.includes(achv.id);
+        const card = document.createElement('div');
+        card.className = 'achievement-card' + (isUnlocked ? ' unlocked' : ' locked');
+        card.innerHTML = `
+          <div class="achv-icon">${isUnlocked ? achv.icon : '🔒'}</div>
+          <div class="achv-name">${isUnlocked ? achv.name : '???'}</div>
+          <div class="achv-desc">${isUnlocked ? achv.desc : 'Chưa mở khóa'}</div>
+        `;
+        achvGrid.appendChild(card);
+      });
+      contentArea.appendChild(achvGrid);
+    }
+  }
+
+  // ===================================================
+  // KỲ THI TIẾNG ANH: WORDLE → LISTENING → RHYTHM
+  // ===================================================
+  // KỲ THI TIẾNG ANH — PHẦN 1 & PHẦN 2 (TÁCH BIỆT)
+  // ===================================================
+  // Dùng game.state._listening_raw để truyền điểm Listening
+  // từ Part 1 sang Part 2 mà không hiển thị ra cốt truyện.
+
+  // Helper hiển thị màn hình chuyển tiếp giữa các phần thi
+  const examOverlay = document.getElementById('exam-intro-overlay');
+  const examPhaseInfo = document.getElementById('exam-phase-info');
+  function showExamPhase(icon, phaseText) {
+    return new Promise(res => {
+      if (!examOverlay) { res(); return; }
+      if (examPhaseInfo) examPhaseInfo.textContent = `${icon} ${phaseText}`;
+      examOverlay.classList.remove('hidden');
+      setTimeout(() => {
+        examOverlay.classList.add('hidden');
+        res();
+      }, 2200);
+    });
+  }
+
+  /**
+   * Part 1: Chỉ chạy Rhythm game.
+   * Lưu điểm tạm thời vào game.state._rhythm_raw để Part 2 dùng.
+   */
+  function runExamPart1() {
+    return new Promise(async (resolve) => {
+      const bgmWasPlaying = !game.bgmAudio.paused;
+      if (bgmWasPlaying) game.bgmAudio.pause();
+
+      await showExamPhase('🎵', 'Kiểm Tra Phản Xạ Âm Thanh (Rhythm)');
+
+      const rhythmResult = await runRhythmExam();
+      let rhythmScore = rhythmResult.score;
+      if (rhythmResult.maxCombo >= 50) {
+        unlockAchievement('rhythm_combo');
+      }
+
+      // Lưu tạm điểm để Part 2 dùng
+      game.state._rhythm_raw = {
+        score: rhythmScore,
+        skipped: rhythmResult.skipped
+      };
+
+      showToast(`🎵 Rhythm xong! Điểm: ${rhythmScore}.`, 'success', 2500);
+      await new Promise(res => setTimeout(res, 1500));
+
+      if (bgmWasPlaying) game.bgmAudio.play().catch(() => {});
+      resolve();
+    });
+  }
+
+  /**
+   * Part 2: Chạy Listening → Wordle → tổng hợp điểm + xếp lớp.
+   * Lấy điểm Rhythm từ game.state._rhythm_raw (do Part 1 ghi).
+   */
+  function runExamPart2() {
+    return new Promise(async (resolve) => {
+      const bgmWasPlaying = !game.bgmAudio.paused;
+      if (bgmWasPlaying) game.bgmAudio.pause();
+
+      // Lấy điểm Rhythm từ Part 1 (mặc định 0 nếu chưa có)
+      const rhythmData = game.state._rhythm_raw || { score: 0, skipped: false };
+      const rhythmScore = rhythmData.score;
+      
+      let listeningScore = 0;
+      let wordleScore = 0;
+      let completedAll = !rhythmData.skipped;
+
+      // ─── LISTENING ──────────────────────────────────
+      await showExamPhase('🎧', 'Phần 1/2 — Kiểm Tra Nghe Hiểu (Listening)');
+
+      listeningScore = await runListeningExam();
+      if (listeningScore === -1) {
+        completedAll = false;
+        listeningScore = 0;
+      } else if (listeningScore >= 100) {
+        unlockAchievement('perfect_listen');
+      }
+
+      showToast(`🎧 Listening xong! Đạt ${listeningScore}%.`, 'success', 2500);
+      await new Promise(res => setTimeout(res, 1500));
+
+      // ─── WORDLE ─────────────────────────────────────
+      await showExamPhase('📝', 'Phần 2/2 — Kiểm Tra Từ Vựng (Wordle)');
+
+      wordleScore = await runWordleExam();
+      if (wordleScore === -1) {
+        completedAll = false;
+        wordleScore = 0;
+      } else if (wordleScore <= 3) {
+        unlockAchievement('wordle_win_3');
+      }
+
+      showToast(`🔤 Wordle xong! Dùng ${wordleScore > 0 ? wordleScore : '(thua)'} lượt.`, 'success', 2500);
+      await new Promise(res => setTimeout(res, 1200));
+
+      // ─── TỔNG HỢP ĐIỂM ──────────────────────────────
+      // Công thức:
+      // Wordle:    Thắng <= 3 lượt = 40đ, <= 6 lượt = 25đ, thua = 0đ
+      // Listening: điểm % * 0.4 (tối đa 40đ)
+      // Rhythm:    mỗi 100 điểm = 2đ (tối đa 20đ)
+      let wordlePoints = 0;
+      if (wordleScore >= 1 && wordleScore <= 3) wordlePoints = 40;
+      else if (wordleScore >= 4 && wordleScore <= 6) wordlePoints = 25;
+
+      const listeningPoints = Math.round(listeningScore * 0.4);
+      const rhythmPoints = Math.min(20, Math.floor(rhythmScore / 100) * 2);
+      const total = wordlePoints + listeningPoints + rhythmPoints;
+
+      // Xếp lớp
+      let englishClass = '';
+      if (total >= 70) {
+        englishClass = 'Lớp Tiếng Anh Nâng Cao (Advanced)';
+        unlockAchievement('english_adv');
+      } else if (total >= 40) {
+        englishClass = 'Lớp Tiếng Anh Trung Cấp (Intermediate)';
+        unlockAchievement('english_mid');
+      } else {
+        englishClass = 'Lớp Tiếng Anh Cơ Bản (Basic)';
+        unlockAchievement('english_basic');
+      }
+
+      game.state.english_class = englishClass;
+      game.state.exam_total = total;
+      delete game.state._rhythm_raw; // Dọn biến tạm
+
+      if (completedAll) unlockAchievement('full_exam');
+      unlockAchievement('exam_taken');
+
+      // Restore BGM
+      if (bgmWasPlaying) game.bgmAudio.play().catch(() => {});
+
+      // Hiển thị kết quả tổng kết
+      showToast(
+        `🏁 Tổng điểm: ${total}/100\n${englishClass}`,
+        'achievement', 6000
+      );
+
+      await new Promise(res => setTimeout(res, 2000));
+      resolve();
+    });
+  }
+
+  // ─── Đăng ký handler cho engine ──────────────────────────────────
+  game.onAction = async (actionName, line) => {
+    if (actionName === 'start_exam_part1') {
+      await runExamPart1();
+    } else if (actionName === 'start_exam_part2') {
+      await runExamPart2();
+    }
+    // Legacy: nếu kịch bản cũ vẫn còn dùng start_english_exam
+    else if (actionName === 'start_english_exam') {
+      await runExamPart1();
+      await runExamPart2();
+    }
+  };
+
+  // ─── Sub-runner: WORDLE ─────────────────────────────────────────
+  /** Mở Wordle, đợi kết thúc, trả về số lượt dùng hoặc -1 nếu đóng. */
+  function runWordleExam() {
+    return new Promise((resolve) => {
+      resetWordleRound();
+      if (wordleOverlay) wordleOverlay.classList.remove('hidden');
+
+      // Ẩn nút "Đóng" và nút "Chơi Lại" để exam mode không thoát được tự do
+      const closeBtn = document.getElementById('btn-close-wordle');
+      const restartBtn = document.getElementById('btn-wordle-restart');
+      if (closeBtn) closeBtn.style.display = 'none';
+      if (restartBtn) restartBtn.style.display = 'none';
+
+      // Poll trạng thái: khi wordleGame.isFinished thì resolve
+      const interval = setInterval(() => {
+        if (wordleGame.isFinished) {
+          clearInterval(interval);
+          if (wordleOverlay) wordleOverlay.classList.add('hidden');
+          if (closeBtn) closeBtn.style.display = '';
+          if (restartBtn) restartBtn.style.display = '';
+
+          const attemptsUsed = wordleGame.attempts.length;
+          const won = wordleGame.isWin;  // WordleGame uses isWin (not isWon)
+          resolve(won ? attemptsUsed : 0); // 0 = thua
+        }
+      }, 500);
+    });
+  }
+
+  // ─── Sub-runner: LISTENING ──────────────────────────────────────
+  /** Mở Listening, đợi onFinish, trả về % điểm hoặc -1 nếu đóng. */
+  function runListeningExam() {
+    return new Promise((resolve) => {
+      // Override onFinish tạm thời
+      const origOnFinish = listeningGame.onFinish;
+      listeningGame.onFinish = (pct) => {
+        listeningGame.onFinish = origOnFinish; // Khôi phục
+        resolve(pct);
+      };
+
+      // Ẩn nút đóng thoát
+      const closeBtn = document.getElementById('btn-close-listening');
+      if (closeBtn) closeBtn.style.display = 'none';
+
+      listeningGame.start('hello-vietnam');
+
+      // Nếu người chơi đóng game (escape), trả về -1
+      const origOnStop = listeningGame.onStop;
+      listeningGame.onStop = () => {
+        listeningGame.onStop = origOnStop;
+        if (closeBtn) closeBtn.style.display = '';
+        if (origOnStop) origOnStop();
+      };
+    });
+  }
+
+  // ─── Sub-runner: RHYTHM ────────────────────────────────────────
+  /** Mở Rhythm game, đợi xong, trả về { score, maxCombo, skipped }. */
+  function runRhythmExam() {
+    return new Promise((resolve) => {
+      game.playClick();
+      rhythmGame.setVolume(game.bgmVolume, game.sfxVolume);
+
+      fetch('/beatmap_test.json')
+        .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+        .then(beatmapData => {
+          window.rhythmGameRef = rhythmGame;
+          rhythmGame.start(beatmapData, 'studio_intro.mp3', null, async (result) => {
+            if (result.silent) { resolve({ score: 0, maxCombo: 0, skipped: true }); return; }
+            const score = result.score || 0;
+            const maxCombo = result.maxCombo || 0;
+            const currentHS = parseInt(localStorage.getItem('tdtu_rhythm_highscore') || '0');
+            if (score > currentHS) localStorage.setItem('tdtu_rhythm_highscore', score);
+            resolve({ score, maxCombo, skipped: false });
+          });
+        })
+        .catch(err => {
+          console.error('Rhythm beatmap load failed:', err);
+          showToast('⚠️ Không tải được beatmap, bỏ qua phần Rhythm.', 'warning', 3000);
+          resolve({ score: 0, maxCombo: 0, skipped: true });
+        });
+    });
+  }
+
+  // (Đã xóa handler trùng lặp cũ ở đây)
+
+
+  // ===================================================
+  // BGM LIBRARY RENDER (giữ nguyên cuối file)
+  // ===================================================
   renderBgmLibrary(allTracks);
+
 
 });

@@ -32,10 +32,27 @@ export function getAssetUrl(path) {
 /**
  * Khởi tạo Supabase Client (gọi sau khi CDN đã load)
  */
-export function initSupabase() {
+export async function initSupabase() {
   if (window.supabase) {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('✅ Supabase client initialized');
+
+    try {
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      if (!sessionData.session) {
+        const { error } = await supabaseClient.auth.signInAnonymously();
+        if (error) {
+          console.error('❌ Supabase Anonymous Auth Failed:', error.message);
+        } else {
+          console.log('✅ Supabase Anonymous Sign-in Successful');
+        }
+      } else {
+        console.log('✅ Supabase Session Restored');
+      }
+    } catch (e) {
+      console.error('❌ Error during Supabase auth:', e);
+    }
+    
     return true;
   }
   console.warn('⚠️ Supabase CDN chưa load, sẽ dùng dữ liệu local');
@@ -120,6 +137,8 @@ export async function fetchScript() {
       // Map additional state features
       if (row.bgm_lock !== undefined) line.bgm_lock = row.bgm_lock;
       if (row.cg_id !== undefined)   line.cg_id = row.cg_id;
+      // Lệnh Action (ví dụ: start_english_exam)
+      if (row.action && row.action.trim() !== '') line.action = row.action.trim();
 
       // SFX (Sound Effects)
       if (row.sfx !== null && row.sfx !== undefined) {

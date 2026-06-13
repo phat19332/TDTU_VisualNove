@@ -9,18 +9,18 @@ import { saveListeningScore, fetchLeaderboard } from './supabase.js';
 export class ListeningGame {
     constructor() {
         /** @type {SongData|null} */
-        this.currentSong  = null;
-        this.audio        = new Audio();
-        this.isPlaying    = false;
-        this.totalBlanks  = 0;
+        this.currentSong = null;
+        this.audio = new Audio();
+        this.isPlaying = false;
+        this.totalBlanks = 0;
         this.correctBlanks = 0;
         /** @type {number|null} */ this._rafId = null;
-        this._retryUsed   = false;   // only 1 retry allowed per session
-        this._hasStarted  = false;   // true after "Bắt Đầu" clicked
+        this._retryUsed = false;   // only 1 retry allowed per session
+        this._hasStarted = false;   // true after "Bắt Đầu" clicked
 
         // BGM hooks set by main.js
         this.onStart = null;
-        this.onStop  = null;
+        this.onStop = null;
 
         /**
          * Callback set by main.js — returns current player ID or null.
@@ -35,12 +35,12 @@ export class ListeningGame {
         this.onFinish = null;
 
         // DOM refs
-        this.overlay     = document.getElementById('listening-overlay');
-        this.viewport    = document.querySelector('.lyrics-viewport');
+        this.overlay = document.getElementById('listening-overlay');
+        this.viewport = document.querySelector('.lyrics-viewport');
         this.progressBar = /** @type {HTMLInputElement|null} */ (document.getElementById('listening-progress'));
         this.timeDisplay = document.getElementById('listening-time');
-        this.btnStop     = document.getElementById('btn-listening-play');   // repurposed as stop/retry
-        this.btnClose    = document.getElementById('btn-close-listening');
+        this.btnStop = document.getElementById('btn-listening-play');   // repurposed as stop/retry
+        this.btnClose = document.getElementById('btn-close-listening');
         this.instructions = document.getElementById('listening-instructions');
 
         if (!this.overlay || !this.viewport || !this.progressBar ||
@@ -66,7 +66,7 @@ export class ListeningGame {
 
     _initEvents() {
         this.btnClose.onclick = () => this.close();
-        this.audio.onended   = () => this._handleSongEnd();
+        this.audio.onended = () => this._handleSongEnd();
 
         // Progress bar is DISPLAY-ONLY — no seeking
         if (this.progressBar) {
@@ -84,18 +84,18 @@ export class ListeningGame {
         const song = listeningData.find(s => s.id === songId) ?? listeningData[0];
         if (!song) { console.error('[ListeningGame] No song data found.'); return; }
 
-        this.currentSong   = song;
-        this.audio.src     = song.audioSrc;
+        this.currentSong = song;
+        this.audio.src = song.audioSrc;
         this.audio.load();           // pre-buffer
         this.audio.currentTime = 0;
 
         // Reset state
-        this._retryUsed   = false;
-        this._hasStarted  = false;
+        this._retryUsed = false;
+        this._hasStarted = false;
         this.correctBlanks = 0;
-        this.totalBlanks   = song.lyrics.reduce((sum, line) => {
+        this.totalBlanks = song.lyrics.reduce((sum, line) => {
             const matches = line.text.match(/\[.*?\]/g);
-            const count   = matches ? matches.length : 0;
+            const count = matches ? matches.length : 0;
             if (count !== line.answers.length) {
                 console.warn(`[ListeningGame] Blank/answer mismatch: "${line.text}"`);
             }
@@ -103,12 +103,12 @@ export class ListeningGame {
         }, 0);
 
         // Populate metadata
-        const coverEl  = /** @type {HTMLImageElement|null} */ (document.getElementById('listening-song-cover'));
-        const titleEl  = document.getElementById('listening-song-title');
+        const coverEl = /** @type {HTMLImageElement|null} */ (document.getElementById('listening-song-cover'));
+        const titleEl = document.getElementById('listening-song-title');
         const artistEl = document.getElementById('listening-song-artist');
-        if (coverEl)  coverEl.src              = song.coverSrc ?? '/assets/logo/feg_logo.png';
-        if (titleEl)  titleEl.textContent      = song.title;
-        if (artistEl) artistEl.textContent     = song.artist;
+        if (coverEl) coverEl.src = song.coverSrc ?? '/assets/logo/feg_logo.png';
+        if (titleEl) titleEl.textContent = song.title;
+        if (artistEl) artistEl.textContent = song.artist;
 
         // Pre-render lyrics (hidden behind instruction panel)
         this._renderLyrics();
@@ -156,21 +156,21 @@ export class ListeningGame {
         if (!this.btnStop) return;
         if (!this._hasStarted) {
             this.btnStop.textContent = '⏹ Nghe lại từ đầu';
-            this.btnStop.disabled    = true;
-            this.btnStop.className   = 'listening-stop-btn';
-            this.btnStop.onclick     = null;
+            this.btnStop.disabled = true;
+            this.btnStop.className = 'listening-stop-btn';
+            this.btnStop.onclick = null;
             return;
         }
         if (this._retryUsed) {
             this.btnStop.textContent = '🚫 Đã hết lượt nghe lại';
-            this.btnStop.disabled    = true;
-            this.btnStop.className   = 'listening-stop-btn used';
-            this.btnStop.onclick     = null;
+            this.btnStop.disabled = true;
+            this.btnStop.className = 'listening-stop-btn used';
+            this.btnStop.onclick = null;
         } else {
             this.btnStop.textContent = '⏹ Nghe lại từ đầu';
-            this.btnStop.disabled    = false;
-            this.btnStop.className   = 'listening-stop-btn';
-            this.btnStop.onclick     = () => this._retryFromStart();
+            this.btnStop.disabled = false;
+            this.btnStop.className = 'listening-stop-btn';
+            this.btnStop.onclick = () => this._retryFromStart();
         }
     }
 
@@ -203,9 +203,9 @@ export class ListeningGame {
         this.viewport.innerHTML = '';
         this.currentSong.lyrics.forEach((line, lineIndex) => {
             const lineDiv = document.createElement('div');
-            lineDiv.className   = 'lyric-line';
+            lineDiv.className = 'lyric-line';
             lineDiv.dataset.start = String(line.startTime);
-            lineDiv.dataset.end   = String(line.endTime);
+            lineDiv.dataset.end = String(line.endTime);
             lineDiv.id = `lyric-${lineIndex}`;
 
             let answerIndex = 0;
@@ -214,13 +214,13 @@ export class ListeningGame {
                 if (m) {
                     const correctWord = line.answers[answerIndex] ?? m[1];
                     const input = document.createElement('input');
-                    input.type          = 'text';
-                    input.className     = 'cloze-input';
+                    input.type = 'text';
+                    input.className = 'cloze-input';
                     input.dataset.answer = correctWord;
-                    input.dataset.line  = String(lineIndex);
-                    input.dataset.idx   = String(answerIndex);
-                    input.autocomplete  = 'off';
-                    input.spellcheck    = false;
+                    input.dataset.line = String(lineIndex);
+                    input.dataset.idx = String(answerIndex);
+                    input.autocomplete = 'off';
+                    input.spellcheck = false;
                     input.addEventListener('keydown', e => {
                         e.stopPropagation();
                         if (e.key === 'Enter') this._checkAnswer(input);
@@ -239,7 +239,7 @@ export class ListeningGame {
     /** @param {HTMLInputElement} input */
     _checkAnswer(input) {
         if (input.disabled) return;
-        const user    = input.value.trim().toLowerCase();
+        const user = input.value.trim().toLowerCase();
         const correct = (input.dataset.answer ?? '').toLowerCase();
         if (!user) return;
 
@@ -255,11 +255,11 @@ export class ListeningGame {
     }
 
     _updateStatus() {
-        const ct  = this.audio.currentTime;
+        const ct = this.audio.currentTime;
         const dur = this.audio.duration;
         if (isFinite(dur) && dur > 0 && this.progressBar && this.timeDisplay) {
-            this.progressBar.value        = String((ct / dur) * 100);
-            this.timeDisplay.textContent  = `${this._fmt(ct)} / ${this._fmt(dur)}`;
+            this.progressBar.value = String((ct / dur) * 100);
+            this.timeDisplay.textContent = `${this._fmt(ct)} / ${this._fmt(dur)}`;
         }
         if (!this.currentSong) return;
         this.currentSong.lyrics.forEach((line, idx) => {
@@ -305,18 +305,18 @@ export class ListeningGame {
         if (this.isPlaying) this.audio.pause();
         const guardModal = document.getElementById('listening-exit-modal');
         if (!guardModal) return this._forceClose();
-        
+
         guardModal.classList.remove('hidden');
-        
+
         const btnQuit = document.getElementById('btn-listen-quit-yes');
         const btnCancel = document.getElementById('btn-listen-quit-no');
-        
+
         const hideModal = () => guardModal.classList.add('hidden');
-        
+
         if (btnQuit) btnQuit.onclick = () => { hideModal(); this._forceClose(); };
         if (btnCancel) btnCancel.onclick = () => {
             hideModal();
-            if (this.isPlaying) this.audio.play().catch(() => {});
+            if (this.isPlaying) this.audio.play().catch(() => { });
         };
     }
 
@@ -340,14 +340,14 @@ export class ListeningGame {
     _showRetryPrompt() {
         const retryModal = document.getElementById('retry-prompt-modal');
         if (!retryModal) return this._finishGame();
-        
+
         retryModal.classList.remove('hidden');
-        
+
         const btnYes = document.getElementById('btn-retry-yes');
         const btnNo = document.getElementById('btn-retry-no');
-        
+
         const hideModal = () => retryModal.classList.add('hidden');
-        
+
         if (btnYes) btnYes.onclick = () => { hideModal(); this._retryFromStart(); };
         if (btnNo) btnNo.onclick = () => { hideModal(); this._finishGame(); };
     }
@@ -364,7 +364,7 @@ export class ListeningGame {
         const songId = this.currentSong?.id ?? 'unknown';
 
         // ── Save best score locally ──────────────────────────────────────
-        const prevBest  = this._getLocalBest(songId);
+        const prevBest = this._getLocalBest(songId);
         const firstTime = prevBest === 0;          // never completed before
         this._setLocalBest(songId, pct);
         const isNewBest = pct > prevBest;
@@ -373,7 +373,7 @@ export class ListeningGame {
         const playerId = typeof this.getPlayerId === 'function' ? this.getPlayerId() : null;
         if (playerId) {
             saveListeningScore(playerId, songId, pct, this.correctBlanks, this.totalBlanks)
-                .catch(() => {}); // non-blocking
+                .catch(() => { }); // non-blocking
         }
 
         // ── Fire onFinish callback (achievements / badge refresh) ────────
@@ -384,7 +384,7 @@ export class ListeningGame {
         // Reveal unanswered blanks
         this.viewport.querySelectorAll('.cloze-input:not(.correct)').forEach(el => {
             const inp = /** @type {HTMLInputElement} */ (el);
-            inp.value    = inp.dataset.answer ?? '';
+            inp.value = inp.dataset.answer ?? '';
             inp.disabled = true;
             inp.classList.add('revealed');
         });
@@ -446,7 +446,7 @@ export class ListeningGame {
         const html = rows.map((r, i) => {
             const isSelf = playerId && r.player_id === playerId;
             const medal = medals[i] ?? `<span class="lb-rank">${i + 1}</span>`;
-            const date  = new Date(r.achieved_at).toLocaleDateString('vi-VN');
+            const date = new Date(r.achieved_at).toLocaleDateString('vi-VN');
             return `
               <div class="lb-row ${isSelf ? 'lb-self' : ''}">
                 <span class="lb-medal">${medal}</span>
@@ -462,13 +462,13 @@ export class ListeningGame {
     /** @param {string} str @returns {string} */
     _escapeHtml(str) {
         return str.replace(/[&<>"']/g, c => ({
-            '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
         }[c] ?? c));
     }
 
     /** @param {number} s @returns {string} */
     _fmt(s) {
-        const m   = Math.floor(s / 60);
+        const m = Math.floor(s / 60);
         const sec = Math.floor(s % 60);
         return `${m}:${sec < 10 ? '0' : ''}${sec}`;
     }

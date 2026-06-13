@@ -546,6 +546,22 @@
 
   </div><!-- end #game-container -->
 
+  <!-- ── Exam Intro Overlay (hiển thị khi bắt đầu kỳ thi Tiếng Anh) ── -->
+  <div id="exam-intro-overlay" class="modal-overlay hidden"
+    style="z-index:10001; background: rgba(0,0,0,0.85); flex-direction: column; gap: 20px;">
+    <div style="text-align:center; color:#fff; font-family: var(--font-ui);">
+      <div style="font-size:4rem; margin-bottom:12px; animation: pulse 1s infinite;">📝</div>
+      <h2 style="font-size:2.2rem; font-weight:900; letter-spacing:2px; color:#fbbf24; text-shadow:0 0 20px rgba(251,191,36,0.6); margin-bottom:8px;">
+        KỲ THI XẾP LỚP TIẾNG ANH
+      </h2>
+      <p style="font-size:1.1rem; color:rgba(255,255,255,0.8); margin-bottom:24px;">
+        Gồm 3 phần: Từ Vựng · Nghe Hiểu · Phản Xạ Âm Thanh
+      </p>
+      <div id="exam-phase-info" style="font-size:1.4rem; font-weight:700; color:#60a5fa; min-height:2rem;"></div>
+    </div>
+  </div>
+
+
   <!-- Thông báo Auto-save -->
   <div id="autosave-toast" class="autosave-toast">
     <span data-i18n="autosave-toast">💾 Đã tự động lưu...</span>
