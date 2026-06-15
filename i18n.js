@@ -65,7 +65,21 @@ export const I18N_DICT = {
     "hub-badge-classic": "Cổ điển",
     "hub-badge-new": "MỚI",
     "btn-gallery": "Gallery",
-    "btn-quit": "Thoát Game"
+    "btn-quit": "Thoát Game",
+    "listen-res-practice": "😅 Cần luyện tập thêm!",
+    "listen-res-excellent": "🏆 Xuất sắc!",
+    "listen-res-good": "🥈 Khá tốt!",
+    "listen-res-try": "🥉 Cố gắng hơn nhé!",
+    "listen-res-newbest": "🌟 Kỷ Lục Mới!",
+    "listen-res-record": "Kỷ lục của bạn: ",
+    "listen-res-correct": "✅ Điền đúng: ",
+    "listen-res-outof": " / ",
+    "listen-res-blanks": " ô trống",
+    "listen-res-hint": "Các ô bỏ trống đã được hiển thị đáp án đúng.",
+    "listen-res-leaderboard": "🏅 Bảng Xếp Hạng",
+    "listen-res-loading": "Đang tải...",
+    "listen-res-exit": "✕ Thoát",
+    "listen-res-nobody": "Chưa có ai trên bảng xếp hạng."
   },
   en: {
     "btn-start": "New Game",
@@ -133,6 +147,20 @@ export const I18N_DICT = {
     "hub-badge-classic": "Classic",
     "hub-badge-new": "NEW",
     "btn-gallery": "Gallery",
-    "btn-quit": "Quit Game"
+    "btn-quit": "Quit Game",
+    "listen-res-practice": "😅 Needs more practice!",
+    "listen-res-excellent": "🏆 Excellent!",
+    "listen-res-good": "🥈 Pretty good!",
+    "listen-res-try": "🥉 Try harder next time!",
+    "listen-res-newbest": "🌟 New Record!",
+    "listen-res-record": "Your best: ",
+    "listen-res-correct": "✅ Correct: ",
+    "listen-res-outof": " / ",
+    "listen-res-blanks": " blanks",
+    "listen-res-hint": "Unanswered blanks are now revealed.",
+    "listen-res-leaderboard": "🏅 Leaderboard",
+    "listen-res-loading": "Loading...",
+    "listen-res-exit": "✕ Close",
+    "listen-res-nobody": "No one is on the leaderboard yet."
   }
 };

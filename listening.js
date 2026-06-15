@@ -1,5 +1,6 @@
 import { listeningData } from './listeningData.js';
 import { saveListeningScore, fetchLeaderboard } from './supabase.js';
+import { I18N_DICT } from './i18n.js';
 
 /**
  * @typedef {{ id: string, title: string, artist: string, audioSrc: string, coverSrc?: string, lyrics: LyricLine[] }} SongData
@@ -392,30 +393,33 @@ export class ListeningGame {
         const resultDiv = document.createElement('div');
         resultDiv.className = 'listening-result-overlay';
 
-        let grade = '😅 Cần luyện tập thêm!';
-        if (pct >= 90) grade = '🏆 Xuất sắc!';
-        else if (pct >= 70) grade = '🥈 Khá tốt!';
-        else if (pct >= 50) grade = '🥉 Cố gắng hơn nhé!';
+        const lang = localStorage.getItem('tdtu_lang') || 'vi';
+        const dict = I18N_DICT[lang] || I18N_DICT['vi'];
+
+        let grade = dict['listen-res-practice'] || '😅 Cần luyện tập thêm!';
+        if (pct >= 90) grade = dict['listen-res-excellent'] || '🏆 Xuất sắc!';
+        else if (pct >= 70) grade = dict['listen-res-good'] || '🥈 Khá tốt!';
+        else if (pct >= 50) grade = dict['listen-res-try'] || '🥉 Cố gắng hơn nhé!';
 
         const bestBadge = isNewBest
-            ? `<span class="new-best-badge">🌟 Kỷ Lục Mới!</span>`
-            : `<span class="local-best-info">Kỷ lục của bạn: <strong>${prevBest}%</strong></span>`;
+            ? `<span class="new-best-badge">${dict['listen-res-newbest'] || '🌟 Kỷ Lục Mới!'}</span>`
+            : `<span class="local-best-info">${dict['listen-res-record'] || 'Kỷ lục của bạn: '}<strong>${prevBest}%</strong></span>`;
 
         resultDiv.innerHTML = `
             <div class="result-score">${pct}%</div>
             ${bestBadge}
             <div class="result-grade">${grade}</div>
-            <p class="result-detail">✅ Điền đúng: <strong class="correct-count">${this.correctBlanks}</strong> / ${this.totalBlanks} ô trống</p>
-            <p class="result-hint">Các ô bỏ trống đã được hiển thị đáp án đúng.</p>
+            <p class="result-detail">${dict['listen-res-correct'] || '✅ Điền đúng: '}<strong class="correct-count">${this.correctBlanks}</strong>${dict['listen-res-outof'] || ' / '}${this.totalBlanks}${dict['listen-res-blanks'] || ' ô trống'}</p>
+            <p class="result-hint">${dict['listen-res-hint'] || 'Các ô bỏ trống đã được hiển thị đáp án đúng.'}</p>
 
             <div class="leaderboard-section">
-              <div class="leaderboard-title">🏅 Bảng Xếp Hạng</div>
+              <div class="leaderboard-title">${dict['listen-res-leaderboard'] || '🏅 Bảng Xếp Hạng'}</div>
               <div class="leaderboard-body" id="leaderboard-body">
-                <div class="lb-loading">Đang tải...</div>
+                <div class="lb-loading">${dict['listen-res-loading'] || 'Đang tải...'}</div>
               </div>
             </div>
 
-            <button class="modal-close-btn" id="btn-listening-finish">✕ Thoát</button>
+            <button class="modal-close-btn" id="btn-listening-finish">${dict['listen-res-exit'] || '✕ Thoát'}</button>
         `;
 
         this.overlay?.querySelector('.listening-container')?.appendChild(resultDiv);
@@ -435,10 +439,13 @@ export class ListeningGame {
         const bodyEl = document.getElementById('leaderboard-body');
         if (!bodyEl) return;
 
+        const lang = localStorage.getItem('tdtu_lang') || 'vi';
+        const dict = I18N_DICT[lang] || I18N_DICT['vi'];
+
         const rows = await fetchLeaderboard(songId, 10);
 
         if (!rows.length) {
-            bodyEl.innerHTML = '<div class="lb-empty">Chưa có ai trên bảng xếp hạng.</div>';
+            bodyEl.innerHTML = `<div class="lb-empty">${dict['listen-res-nobody'] || 'Chưa có ai trên bảng xếp hạng.'}</div>`;
             return;
         }
 

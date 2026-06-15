@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { VNEngine } from './engine.js';
 import { storyScript as localScript } from './gameData.js';
-import { initSupabase, fetchScript, fetchMusic, saveGame, loadGame, getAllSaves, fetchGlobalData, saveGlobalData, getAssetUrl } from './supabase.js';
+import { initSupabase, fetchScript, fetchMusic, saveGame, loadGame, getAllSaves, fetchGlobalData, saveGlobalData, getAssetUrl, saveRhythmScore } from './supabase.js';
 import { RhythmGame } from './rhythm.js';
 import { I18N_DICT } from './i18n.js';
 import { WordleGame, renderWordleRow, getRandomWord } from './wordle.js';
@@ -12,8 +12,8 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       // Disable SW in dev mode to avoid caching issues with Vite
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for(let registration of registrations) {
+      navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        for (let registration of registrations) {
           registration.unregister();
         }
       });
@@ -48,11 +48,11 @@ function showToast(message, type = 'info', durationMs = 3500) {
     document.body.appendChild(_toastContainer);
   }
 
-  const icons = { info:'\u2139\uFE0F', success:'\u2705', warning:'\u26A0\uFE0F', achievement:'\uD83C\uDFC6' };
+  const icons = { info: '\u2139\uFE0F', success: '\u2705', warning: '\u26A0\uFE0F', achievement: '\uD83C\uDFC6' };
   const colors = {
-    info:        'linear-gradient(135deg,#334155,#1e293b)',
-    success:     'linear-gradient(135deg,#166534,#15803d)',
-    warning:     'linear-gradient(135deg,#92400e,#b45309)',
+    info: 'linear-gradient(135deg,#334155,#1e293b)',
+    success: 'linear-gradient(135deg,#166534,#15803d)',
+    warning: 'linear-gradient(135deg,#92400e,#b45309)',
     achievement: 'linear-gradient(135deg,#78350f,#d97706)'
   };
 
@@ -196,10 +196,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- Sequence: Start Overlay -> Studio Intro -> Loading Splash -> Title ---
   const startOverlay = document.getElementById('start-overlay');
-  
+
   function startSequence() {
     if (studioScreen) studioScreen.classList.add('active');
-    
+
     const logoImg = document.getElementById('feg-logo-img');
     if (logoImg) logoImg.classList.add('start-animation');
 
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     startOverlay.addEventListener('click', () => {
       startOverlay.style.opacity = '0';
       startOverlay.style.transition = 'opacity 0.5s ease';
-      
+
       // THỦ THUẬT: Mồi nhạc BGM (Audio Warm-up) ngay khi có cú click đầu tiên
       // Cố định chạy ngầm bài nhạc chính (tdtu_theme.mp3) ở mức âm lượng 0
       game.bgmAudio.src = getAssetUrl('/assets/audio/tdtu_theme.mp3');
@@ -810,6 +810,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log("Kỷ lục mới được lưu!");
           }
 
+          if (currentPlayerId && result.score > 0) {
+            saveRhythmScore(currentPlayerId, 'beatmap_test', result.score, result.maxCombo);
+          }
+
           await triggerAutoSave();
         });
       })
@@ -1092,14 +1096,102 @@ document.addEventListener('DOMContentLoaded', async () => {
     mcNameOverlay.classList.remove('hidden');
   }
 
+  // --- Intro Video Logic ---
+  function playIntroVideo() {
+    return new Promise((resolve) => {
+      const overlay = document.getElementById('video-intro-overlay');
+      const video = document.getElementById('intro-video');
+      const btnSkip = document.getElementById('btn-skip-intro');
+      const loader = document.getElementById('video-intro-loader');
+
+      if (!overlay || !video) { resolve(); return; }
+
+      // Tạm dừng BGM nếu đang phát
+      if (game.bgmAudio && !game.bgmAudio.paused) {
+        game.bgmAudio.pause();
+        game._introBgmWasPlaying = true;
+      } else {
+        game._introBgmWasPlaying = false;
+      }
+
+      let resolved = false;
+      function finishIntro() {
+        if (resolved) return;
+        resolved = true;
+        clearTimeout(bufferTimeout);
+        video.pause();
+        video.currentTime = 0;
+        video.removeAttribute('src');
+        video.load(); // giải phóng bộ nhớ
+        overlay.classList.add('hidden');
+        video.style.display = 'none';
+        if (btnSkip) btnSkip.style.display = 'none';
+        if (loader) loader.style.display = 'flex';
+        // Khôi phục BGM nếu đã tạm dừng
+        if (game._introBgmWasPlaying && game.bgmAudio) {
+          game.bgmAudio.play().catch(() => { });
+        }
+        resolve();
+      }
+
+      // Timeout 15 giây — mạng quá yếu thì bỏ qua video
+      const bufferTimeout = setTimeout(() => {
+        console.warn('[Intro Video] Buffer timeout — bỏ qua video do mạng yếu.');
+        finishIntro();
+      }, 15000);
+
+      // Hiển thị overlay với spinner (video chưa hiện)
+      overlay.classList.remove('hidden');
+      if (loader) loader.style.display = 'flex';
+      if (video) video.style.display = 'none';
+      if (btnSkip) btnSkip.style.display = 'none';
+
+      // LAZY-LOAD: chỉ gán src tại đây, không phải khi tải trang
+      video.src = 'https://wqslipfvtrkjnnlpxsic.supabase.co/storage/v1/object/public/game-assets/intro_TDTU_VN.mp4';
+      video.load();
+
+      // Khi đã đủ dữ liệu để phát mượt → ẩn spinner, hiện video
+      video.addEventListener('canplay', () => {
+        if (resolved) return;
+        if (loader) loader.style.display = 'none';
+        video.style.display = 'block';
+        if (btnSkip) btnSkip.style.display = 'block';
+        video.play().then(() => {
+          // Video đã bắt đầu phát thành công → xóa timeout buffer ngay
+          clearTimeout(bufferTimeout);
+        }).catch((err) => {
+          console.warn('[Intro Video] Không thể tự phát video:', err);
+          finishIntro();
+        });
+      }, { once: true });
+
+      // Sự kiện khi video kết thúc tự nhiên
+      video.addEventListener('ended', finishIntro, { once: true });
+
+      // Sự kiện nút Bỏ qua
+      if (btnSkip) {
+        btnSkip.addEventListener('click', finishIntro, { once: true });
+      }
+
+      // Nếu src lỗi (file không tìm thấy) → bỏ qua luôn
+      video.addEventListener('error', () => {
+        console.warn('[Intro Video] Lỗi tải video — bỏ qua.');
+        finishIntro();
+      }, { once: true });
+    });
+  }
+
   document.getElementById('btn-confirm-name').addEventListener('click', () => {
     const name = mcNameInput.value.trim();
     game.mcName = name || "Người chơi";
     mcNameOverlay.classList.add('hidden');
     game.playClick();
 
-    syncGlobalData().then(() => {
-      game.start();
+    // Phát Intro Video trước, sau đó mới load dữ liệu từ Supabase
+    playIntroVideo().then(() => {
+      syncGlobalData().then(() => {
+        game.start();
+      });
     });
   });
 
@@ -1492,15 +1584,15 @@ document.addEventListener('DOMContentLoaded', async () => {
    * condition: 'auto' = unlock thủ công bằng code, hoặc một chuỗi mô tả.
    */
   const ACHIEVEMENTS = [
-    { id: 'first_step',    icon: '🎓', name: 'Bước Đầu Tiên',    desc: 'Bắt đầu hành trình tại TDTU.' },
-    { id: 'exam_taken',    icon: '📝', name: 'Dự Thi',            desc: 'Hoàn thành kỳ thi xếp lớp Tiếng Anh.' },
+    { id: 'first_step', icon: '🎓', name: 'Bước Đầu Tiên', desc: 'Bắt đầu hành trình tại TDTU.' },
+    { id: 'exam_taken', icon: '📝', name: 'Dự Thi', desc: 'Hoàn thành kỳ thi xếp lớp Tiếng Anh.' },
     { id: 'english_basic', icon: '📖', name: 'Bước Đầu Tiếng Anh', desc: 'Được xếp vào Lớp Tiếng Anh Cơ Bản.' },
-    { id: 'english_mid',   icon: '📚', name: 'Tiếng Anh Trung Cấp', desc: 'Được xếp vào Lớp Tiếng Anh Trung Cấp.' },
-    { id: 'english_adv',   icon: '🏆', name: 'Tiếng Anh Xuất Sắc', desc: 'Đạt loại Xuất Sắc trong kỳ thi Tiếng Anh!' },
-    { id: 'wordle_win_3',  icon: '🔤', name: 'Nhà Từ Vựng Học',   desc: 'Đoán đúng từ Wordle trong 3 lượt trở xuống.' },
-    { id: 'perfect_listen',icon: '🎧', name: 'Tai Nghe Vàng',     desc: 'Đạt 100% trong bài Nghe Hiểu.' },
-    { id: 'rhythm_combo',  icon: '🎵', name: 'Vua Nhịp Điệu',     desc: 'Đạt combo trên 50 trong Rhythm Battle.' },
-    { id: 'full_exam',     icon: '🌟', name: 'Chiến Binh Toàn Diện', desc: 'Hoàn thành cả 3 phần thi mà không bỏ cuộc.' },
+    { id: 'english_mid', icon: '📚', name: 'Tiếng Anh Trung Cấp', desc: 'Được xếp vào Lớp Tiếng Anh Trung Cấp.' },
+    { id: 'english_adv', icon: '🏆', name: 'Tiếng Anh Xuất Sắc', desc: 'Đạt loại Xuất Sắc trong kỳ thi Tiếng Anh!' },
+    { id: 'wordle_win_3', icon: '🔤', name: 'Nhà Từ Vựng Học', desc: 'Đoán đúng từ Wordle trong 3 lượt trở xuống.' },
+    { id: 'perfect_listen', icon: '🎧', name: 'Tai Nghe Vàng', desc: 'Đạt 100% trong bài Nghe Hiểu.' },
+    { id: 'rhythm_combo', icon: '🎵', name: 'Vua Nhịp Điệu', desc: 'Đạt combo trên 50 trong Rhythm Battle.' },
+    { id: 'full_exam', icon: '🌟', name: 'Chiến Binh Toàn Diện', desc: 'Hoàn thành cả 3 phần thi mà không bỏ cuộc.' },
   ];
 
   /**
@@ -1538,7 +1630,7 @@ document.addEventListener('DOMContentLoaded', async () => {
    */
   const _originalOpenGallery = openGallery;
   // eslint-disable-next-line no-func-assign
-  openGallery = function() {
+  openGallery = function () {
     renderGalleryTabbed('cg');
     galleryOverlay.classList.remove('hidden');
   };
@@ -1674,7 +1766,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       showToast(`🎵 Rhythm xong! Điểm: ${rhythmScore}.`, 'success', 2500);
       await new Promise(res => setTimeout(res, 1500));
 
-      if (bgmWasPlaying) game.bgmAudio.play().catch(() => {});
+      if (bgmWasPlaying) game.bgmAudio.play().catch(() => { });
       resolve();
     });
   }
@@ -1691,7 +1783,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Lấy điểm Rhythm từ Part 1 (mặc định 0 nếu chưa có)
       const rhythmData = game.state._rhythm_raw || { score: 0, skipped: false };
       const rhythmScore = rhythmData.score;
-      
+
       let listeningScore = 0;
       let wordleScore = 0;
       let completedAll = !rhythmData.skipped;
@@ -1758,7 +1850,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       unlockAchievement('exam_taken');
 
       // Restore BGM
-      if (bgmWasPlaying) game.bgmAudio.play().catch(() => {});
+      if (bgmWasPlaying) game.bgmAudio.play().catch(() => { });
 
       // Hiển thị kết quả tổng kết
       showToast(

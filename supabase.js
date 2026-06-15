@@ -384,3 +384,70 @@ export async function fetchLeaderboard(songId, limit = 10) {
     return [];
   }
 }
+
+/**
+ * Lưu điểm Rhythm Game lên Supabase.
+ * Chỉ ghi đè nếu score mới cao hơn record hiện tại.
+ * @param {string} playerId
+ * @param {string} beatmapId
+ * @param {number} score
+ * @param {number} maxCombo
+ */
+export async function saveRhythmScore(playerId, beatmapId, score, maxCombo) {
+  if (!supabaseClient || !playerId) return false;
+
+  try {
+    const { data: existing } = await supabaseClient
+      .from('rhythm_scores')
+      .select('score')
+      .eq('player_id', playerId)
+      .eq('beatmap_id', beatmapId)
+      .single();
+
+    if (existing && existing.score >= score) {
+      console.log(`📊 Score ${score} không cao hơn best hiện tại ${existing.score}, bỏ qua.`);
+      return true;
+    }
+
+    const { error } = await supabaseClient
+      .from('rhythm_scores')
+      .upsert({
+        player_id:   playerId,
+        beatmap_id:  beatmapId,
+        score:       score,
+        max_combo:   maxCombo,
+        achieved_at: new Date().toISOString()
+      }, { onConflict: 'player_id,beatmap_id' });
+
+    if (error) throw error;
+    console.log(`✅ Rhythm score saved: ${playerId} — ${beatmapId} — ${score}`);
+    return true;
+  } catch (err) {
+    console.error('❌ Lỗi save rhythm score:', err);
+    return false;
+  }
+}
+
+/**
+ * Lấy top-N leaderboard cho một beatmap rhythm game.
+ * @param {string} beatmapId
+ * @param {number} [limit=10]
+ */
+export async function fetchRhythmLeaderboard(beatmapId, limit = 10) {
+  if (!supabaseClient) return [];
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('rhythm_scores')
+      .select('player_id, score, max_combo, achieved_at')
+      .eq('beatmap_id', beatmapId)
+      .order('score', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error('❌ Lỗi fetch rhythm leaderboard:', err);
+    return [];
+  }
+}

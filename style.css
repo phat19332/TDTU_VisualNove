@@ -1891,4 +1891,9 @@ body {
 .achievement-card.locked .achv-desc {
   color: #64748b;
 }
+
+/* Spinner cho Video Intro Overlay */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
